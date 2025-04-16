@@ -1,12 +1,17 @@
+// app/layout.tsx  (Next.js App Router)
+
+// ---------- SERVER COMPONENT ----------
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import LoadingScreen from "@/components/loadingscreens/loadingmainscreen";
+import HydrationGate from "@/components/loadingscreens/hydrationgate"; // <- new
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -19,15 +24,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        {/* 1️⃣ Streaming phase: show LoadingScreen until server components stream */}
+        <Suspense fallback={<LoadingScreen />}>
+          {/* 2️⃣ Hydration phase: keep LoadingScreen until the page is hydrated */}
+          <HydrationGate>{children}</HydrationGate>
+        </Suspense>
       </body>
     </html>
   );
