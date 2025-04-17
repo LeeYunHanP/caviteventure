@@ -4,13 +4,12 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-type EditableProfileProps = {
+type Props = {
   initialName: string;
   initialEmail: string;
   initialCity: string;
   initialGender: "male" | "female";
   initialProfilePicture?: string;
-  /** Text to display on the cancel button */
   cancelButtonText?: string;
 };
 
@@ -21,7 +20,7 @@ export default function EditableProfile({
   initialGender,
   initialProfilePicture,
   cancelButtonText = "Cancel",
-}: EditableProfileProps) {
+}: Props) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
   const [city, setCity] = useState(initialCity);
@@ -33,33 +32,37 @@ export default function EditableProfile({
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Simulate an image upload; in production, upload to S3/Cloudinary, etc.
+  // Upload to your per-user folder
   const handleFileUpload = async (file: File): Promise<string> => {
     setUploading(true);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const url = URL.createObjectURL(file);
-        setUploading(false);
-        resolve(url);
-      }, 2000);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/auth/uploadProfileImage", {
+      method: "POST",
+      body: form,
     });
+    if (!res.ok) {
+      setUploading(false);
+      throw new Error("Upload failed");
+    }
+    const { url } = await res.json();
+    setUploading(false);
+    return url;
   };
 
-  const handleFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      // Immediately show a preview
-      const previewUrl = URL.createObjectURL(file);
-      setProfilePicture(previewUrl);
-      // Simulate the upload process
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    const file = e.target.files[0];
+    setProfilePicture(URL.createObjectURL(file));
+    try {
       const uploadedUrl = await handleFileUpload(file);
       setProfilePicture(uploadedUrl);
+    } catch {
+      setStatus("Image upload failed");
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const onSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("");
     setIsSaving(true);
@@ -70,21 +73,20 @@ export default function EditableProfile({
         body: JSON.stringify({ name, city, gender, profilePicture }),
       });
       const data = await res.json();
-      if (res.ok) {
-        setStatus("Profile updated successfully.");
-        setTimeout(() => router.push("/profilepage"), 1500);
+      if (!res.ok) {
+        setStatus(data.message || "Update failed");
       } else {
-        setStatus(data.message || "Failed to update profile.");
+        setStatus("Saved!");
+        setTimeout(() => router.push("/profilepage"), 1200);
       }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      setStatus("An error occurred while updating your profile.");
+    } catch {
+      setStatus("Server error");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleCancel = () => {
+  const onCancel = () => {
     setName(initialName);
     setCity(initialCity);
     setGender(initialGender);
@@ -93,111 +95,67 @@ export default function EditableProfile({
   };
 
   return (
-    <form
-      onSubmit={handleSave}
-      className="bg-white shadow rounded-lg p-6 relative overflow-hidden"
-    >
-      {/* Decorative building silhouette at the bottom */}
-      <div className="absolute bottom-0 left-0 w-full h-8 overflow-hidden opacity-10 pointer-events-none">
-        <div
-          className="w-full h-full bg-repeat-x"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg ...%3E")`,
-            backgroundSize: "1000px 40px",
-          }}
-        ></div>
-      </div>
-
-      {/* Profile picture & upload */}
-      <div className="flex flex-col items-center mb-6 relative z-10">
-        <div className="relative">
-          {profilePicture ? (
-            <Image
-              src={profilePicture}
-              alt="Profile"
-              width={128}
-              height={128}
-              className="rounded-full object-cover border-4 border-[#8B4513]"
-            />
-          ) : (
-            <div className="w-32 h-32 rounded-full bg-[#e6d7c3] flex items-center justify-center text-[#654321]">
-              No Image
-            </div>
-          )}
-          <label className="absolute bottom-0 right-0 bg-[#8B4513] text-[#f5f0e5] rounded-full p-2 cursor-pointer hover:bg-[#654321] transition shadow-md">
-            {uploading ? (
-              <span className="animate-spin">⏳</span>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M4 5a2 2 0 00-2 2v8..."
-                  clipRule="evenodd"
-                />
-              </svg>
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </label>
-        </div>
-      </div>
-
-      {/* Form fields */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
-        <div>
-          <label className="block text-xl font-semibold text-[#654321]">
-            Name
-          </label>
+    <form onSubmit={onSave} className="bg-white p-6 rounded-lg shadow">
+      <div className="flex flex-col items-center mb-6">
+        {profilePicture ? (
+          <Image
+            src={profilePicture}
+            alt="Profile"
+            width={128}
+            height={128}
+            className="rounded-full object-cover border-4 border-[#8B4513]"
+          />
+        ) : (
+          <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center">
+            No Image
+          </div>
+        )}
+        <label className="mt-2 inline-flex items-center px-3 py-1 bg-[#8B4513] text-white rounded cursor-pointer">
+          {uploading ? "Uploading…" : "Change"}
           <input
-            type="text"
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={onFileChange}
+          />
+        </label>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block font-medium">Name</label>
+          <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-2 p-3 border border-[#e6d7c3] rounded w-full focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent"
+            className="mt-1 w-full p-2 border rounded"
             required
           />
         </div>
         <div>
-          <label className="block text-xl font-semibold text-[#654321]">
-            Email
-          </label>
+          <label className="block font-medium">Email</label>
           <input
-            type="email"
             value={initialEmail}
             readOnly
-            className="mt-2 p-3 border border-[#e6d7c3] rounded w-full bg-[#f5f0e5] cursor-not-allowed text-[#8B4513]"
+            className="mt-1 w-full p-2 border bg-gray-100 rounded"
           />
         </div>
         <div>
-          <label className="block text-xl font-semibold text-[#654321]">
-            City
-          </label>
+          <label className="block font-medium">City</label>
           <input
-            type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="mt-2 p-3 border border-[#e6d7c3] rounded w-full focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent"
+            className="mt-1 w-full p-2 border rounded"
             required
           />
         </div>
         <div>
-          <label className="block text-xl font-semibold text-[#654321]">
-            Gender
-          </label>
+          <label className="block font-medium">Gender</label>
           <select
             value={gender}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
               setGender(e.target.value as "male" | "female")
             }
-            className="mt-2 p-3 border border-[#e6d7c3] rounded w-full focus:outline-none focus:ring-2 focus:ring-[#8B4513] focus:border-transparent bg-white"
+            className="mt-1 w-full p-2 border rounded"
             required
           >
             <option value="male">Male</option>
@@ -206,30 +164,20 @@ export default function EditableProfile({
         </div>
       </div>
 
-      {/* Status message */}
-      {status && (
-        <div className="mt-4 p-3 bg-[#f5f0e5] border border-[#e6d7c3] rounded text-[#654321] font-semibold">
-          {status}
-        </div>
-      )}
+      {status && <p className="mt-4 text-sm text-red-600">{status}</p>}
 
-      {/* Action buttons */}
-      <div className="flex gap-4 mt-6 relative z-10">
+      <div className="mt-6 flex gap-4">
         <button
           type="submit"
           disabled={isSaving}
-          className={`flex-1 p-3 rounded text-white font-medium transition ${
-            isSaving
-              ? "bg-[#a67c52] cursor-not-allowed"
-              : "bg-[#8B4513] hover:bg-[#654321]"
-          }`}
+          className="flex-1 px-4 py-2 bg-[#8B4513] text-white rounded disabled:opacity-50"
         >
-          {isSaving ? "Saving..." : "Save Changes"}
+          {isSaving ? "Saving…" : "Save"}
         </button>
         <button
           type="button"
-          onClick={handleCancel}
-          className="flex-1 p-3 rounded border border-[#e6d7c3] text-[#654321] hover:bg-[#f5f0e5] transition"
+          onClick={onCancel}
+          className="flex-1 px-4 py-2 border rounded"
         >
           {cancelButtonText}
         </button>

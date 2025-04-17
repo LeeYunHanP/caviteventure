@@ -1,4 +1,3 @@
-// File: app/api/auth/updateProfile/route.ts
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -7,34 +6,50 @@ import User from "@/models/User";
 import { getUserIdByToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  await dbConnect();
+
+  let body: {
+    name?: string;
+    city?: string;
+    gender?: string;
+    profilePicture?: string;
+  };
   try {
-    await dbConnect();
-    const { name, city, gender, profilePicture } = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ message: "Invalid JSON" }, { status: 400 });
+  }
 
-    // Extract session token from cookies
-    const cookieHeader = req.headers.get("cookie") || "";
-    const tokenMatch = cookieHeader.match(/sessionToken=([^;]+)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
-    if (!token) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-    const userId = await getUserIdByToken(token);
-    if (!userId) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+  const { name, city, gender, profilePicture } = body;
 
-    const updatedUser = await User.findByIdAndUpdate(
+  // Authenticate
+  const token = req.cookies.get("sessionToken")?.value;
+  if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  const userId = await getUserIdByToken(token);
+  if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+  // Validate
+  if (!name || !city || !gender) {
+    return NextResponse.json(
+      { message: "Name, city, and gender are required." },
+      { status: 400 }
+    );
+  }
+
+  // Update only those fields
+  try {
+    const updated = await User.findByIdAndUpdate(
       userId,
       { name, city, gender, profilePicture },
       { new: true }
     ).lean();
-
-    return NextResponse.json({
-      message: "Profile updated successfully",
-      user: updatedUser,
-    });
-  } catch (error) {
-    console.error("Update profile error:", error);
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+    if (!updated) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+    // Return the full updated document (including profilePicture)
+    return NextResponse.json({ message: "Profile updated", user: updated });
+  } catch (e) {
+    console.error("Update error:", e);
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
