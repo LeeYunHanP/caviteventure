@@ -8,6 +8,7 @@ import LoadingScreen from "@/components/loadingscreens/loadingmainscreen";
 import HydrationGate from "@/components/loadingscreens/hydrationgate";
 import Header from "@/components/topheader/header";
 import Bottom from "@/components/bottomheader/bottom";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css";
 
 const geistSans = Geist({
