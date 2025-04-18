@@ -70,7 +70,7 @@ export default async function ProfilePage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <h1 className="text-3xl font-bold text-[#654321] flex items-center gap-2">
             <Building className="w-6 h-6 text-[#8B4513]" />
-            Zentry Profile
+            CaviteVenture Profile
           </h1>
           <SignOutButton />
         </div>

@@ -16,6 +16,9 @@ const cylinderImageUrl =
   "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744808221/cylinder_eweghq.jpg";
 const noodleImageUrl =
   "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744808224/noodle_dx1ag9.jpg";
+// Added Casa Hacienda de Tejeros image
+const casaHaciendaImageUrl =
+  "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744809933/casa_fnca4v.jpg";
 
 // Import your pages
 import BinakayanPage from "@/components/homepage/binakayan";
@@ -51,6 +54,12 @@ export default function ClientHome() {
       name: "San Roque Church",
       date: "1573",
       alt: "Noodle image",
+    },
+    {
+      image: casaHaciendaImageUrl,
+      name: "Casa Hacienda de Tejeros",
+      date: "March 22, 1897",
+      alt: "Casa Hacienda de Tejeros image",
     },
   ];
 
