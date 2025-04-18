@@ -8,7 +8,33 @@ import { sendVerificationEmail } from "@/utils/sendVerificationEmail";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, city, gender, password, confirmPassword, acceptTerms } = await req.json();
+    const {
+      name,
+      email,
+      city,
+      gender,
+      password,
+      confirmPassword,
+      acceptTerms,
+      captchaToken,
+    } = await req.json();
+
+    // Verify CAPTCHA
+    if (!captchaToken) {
+      return NextResponse.json({ message: "Missing CAPTCHA token." }, { status: 400 });
+    }
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+    if (!secretKey) {
+      console.error('Missing RECAPTCHA_SECRET_KEY in environment');
+      return NextResponse.json({ message: "Server misconfiguration." }, { status: 500 });
+    }
+    const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captchaToken}`;
+    const captchaRes = await fetch(verifyUrl, { method: 'POST' });
+    const captchaJson = await captchaRes.json();
+    if (!captchaJson.success) {
+      console.error('reCAPTCHA verification failed:', captchaJson['error-codes']);
+      return NextResponse.json({ message: "CAPTCHA verification failed." }, { status: 400 });
+    }
 
     // Basic validations
     if (!name || !email || !city || !gender || !password || !confirmPassword) {
@@ -24,23 +50,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Passwords do not match." }, { status: 400 });
     }
 
+    // Connect to DB
     await dbConnect();
 
-    // Check if a user with the same name or email already exists
-    const existingName = await User.findOne({ name });
-    if (existingName) {
+    // Check duplicates
+    if (await User.findOne({ name })) {
       return NextResponse.json({ message: "A user with that name already exists." }, { status: 400 });
     }
-    const existingEmail = await User.findOne({ email });
-    if (existingEmail) {
+    if (await User.findOne({ email })) {
       return NextResponse.json({ message: "A user with that email already exists." }, { status: 400 });
     }
 
-    // Hash password and generate a 6-digit verification code
+    // Hash password & create verify code
     const hashedPassword = await bcrypt.hash(password, 10);
     const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Create the user document
+    // Create user
     await User.create({
       name,
       email,
@@ -51,7 +76,7 @@ export async function POST(req: NextRequest) {
       verifyCode,
     });
 
-    // Send verification email using nodemailer
+    // Send email
     await sendVerificationEmail(email, verifyCode);
 
     return NextResponse.json(
