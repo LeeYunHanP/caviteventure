@@ -1,19 +1,22 @@
 // File: src/app/api/events/[eventId]/approve/route.ts
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Event from "@/models/Event";
 import mongoose from "mongoose";
 
 export async function PATCH(
-  _request: NextRequest,
-  { params }: { params: { eventId: string } }
+  _request: Request,
+  // Declare params as a Promise for Next.js 15
+  { params }: { params: Promise<{ eventId: string }> }
 ): Promise<NextResponse> {
   try {
+    // Await the dynamic segment
+    const { eventId } = await params;
+
+    // Connect to the database
     await dbConnect();
 
-    const { eventId } = params;
-
+    // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(eventId)) {
       return NextResponse.json(
         { error: "Invalid event ID" },
@@ -21,6 +24,7 @@ export async function PATCH(
       );
     }
 
+    // Update event status
     const updated = await Event.findByIdAndUpdate(
       eventId,
       { status: "approved" },
