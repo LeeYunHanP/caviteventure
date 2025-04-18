@@ -36,31 +36,40 @@ export async function POST(req: NextRequest) {
 
     // 5) Parse the request body (JSON with base64 image)
     const body = await req.json();
-    const { title, description, date, location, image } = body;
+    const { title, description, date, time, location, image } = body;
 
-    if (!title || !description || !date || !location) {
+    // 6) Validate required fields (including time)
+    if (!title || !description || !date || !time || !location) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // 6) Create the event with status = "pending"
+    // 7) Combine date and time into a single Date object
+    const dateTime = new Date(`${date}T${time}`);
+    if (isNaN(dateTime.getTime())) {
+      return NextResponse.json({ error: "Invalid date or time format" }, { status: 400 });
+    }
+
+    // 8) Create the event with status = "pending"
     const newEvent = await Event.create({
       title,
       description,
-      date,
+      date: dateTime,
+      time,
       location,
       createdBy: currentUser._id,
       image, // store the base64 or data URL
-      status: "pending", // Key line: event now requires superadmin approval
+      status: "pending", // event now requires superadmin approval
     });
 
-    // 7) Create a log entry
+    // 9) Create a log entry
     await Log.create({
       userId: currentUser._id,
       actionType: "created event",
       eventId: newEvent._id,
+      description: `Created event '${title}' scheduled at ${date} ${time}`,
     });
 
-    // 8) Respond success
+    // 10) Respond success
     return NextResponse.json({
       success: true,
       event: newEvent,

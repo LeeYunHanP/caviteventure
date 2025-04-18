@@ -1,15 +1,14 @@
-// File: src/app/createevent/CreateEventClient.tsx
 "use client";
 
-import type React from "react";
-import { useState } from "react";
-import { Calendar, MapPin, Image as LucideImage, Upload, X, Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import { Calendar, MapPin, Image as LucideImage, Upload, X, Loader2, Clock } from "lucide-react";
 import NextImage from "next/image";
 
 export default function CreateEventClient() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
   const [image, setImage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,7 +48,6 @@ export default function CreateEventClient() {
 
   const handleRemoveImage = () => {
     setImage("");
-    // Reset the file input
     const fileInput = document.getElementById("eventImageInput") as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
@@ -68,9 +66,9 @@ export default function CreateEventClient() {
           title,
           description,
           date,
+          time,
           location,
           image,
-          // We expect the server to set { status: "pending" } behind the scenes
         }),
       });
 
@@ -80,12 +78,11 @@ export default function CreateEventClient() {
         return;
       }
 
-      // Show success message
-      setSuccess(`Event "${data.event.title}" created successfully!`);
-      // Reset the form
+      setSuccess(`Event \"${data.event.title}\" created successfully!`);
       setTitle("");
       setDescription("");
       setDate("");
+      setTime("");
       setLocation("");
       setImage("");
     } catch (err) {
@@ -104,7 +101,7 @@ export default function CreateEventClient() {
             Create Event
           </h1>
           <p className="text-[#8d6e63] mb-6">
-            Fill in the details to create a new event
+            Fill in the details below, including date and time, to schedule your event
           </p>
         </div>
 
@@ -139,7 +136,7 @@ export default function CreateEventClient() {
           {/* Description */}
           <div className="space-y-2">
             <label htmlFor="description" className="block text-sm font-medium text-[#5d4037]">
-              Description
+              Event Description
             </label>
             <textarea
               id="description"
@@ -147,12 +144,12 @@ export default function CreateEventClient() {
               className="w-full px-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your event"
+              placeholder="Provide a detailed description of the event"
               required
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Date */}
             <div className="space-y-2">
               <label htmlFor="date" className="block text-sm font-medium text-[#5d4037]">
@@ -168,6 +165,26 @@ export default function CreateEventClient() {
                   className="w-full pl-10 pr-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Time */}
+            <div className="space-y-2">
+              <label htmlFor="time" className="block text-sm font-medium text-[#5d4037]">
+                Time
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Clock size={18} className="text-[#a1887f]" />
+                </div>
+                <input
+                  type="time"
+                  id="time"
+                  className="w-full pl-10 pr-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
                   required
                 />
               </div>

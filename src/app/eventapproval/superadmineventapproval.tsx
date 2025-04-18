@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { gsap } from "gsap";
 import {
@@ -40,8 +39,9 @@ export default function SuperAdminEventApproval() {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
   const [selectedEvent, setSelectedEvent] = useState<IEvent | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+
 
   /* ---------------------------- REFS & HELPERS ----------------------------- */
   const cardRefs = useRef<HTMLDivElement[]>([]);
@@ -64,14 +64,11 @@ export default function SuperAdminEventApproval() {
 
     try {
       const res = await fetch("/api/events/pending");
-      if (!res.ok) {
-        throw new Error("Failed to fetch pending events.");
-      }
+      if (!res.ok) throw new Error("Failed to fetch pending events.");
       const data = await res.json();
       setPendingEvents(data.events || []);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setError(message);
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -80,16 +77,11 @@ export default function SuperAdminEventApproval() {
   const handleApprove = async (eventId: string) => {
     setActionInProgress(eventId);
     try {
-      const res = await fetch(`/api/events/${eventId}/approve`, {
-        method: "PATCH",
-      });
-      if (!res.ok) {
-        throw new Error("Failed to approve event");
-      }
+      const res = await fetch(`/api/events/${eventId}/approve`, { method: "PATCH" });
+      if (!res.ok) throw new Error("Failed to approve event");
       await fetchPendingEvents();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setError(message);
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setActionInProgress(null);
     }
@@ -103,44 +95,35 @@ export default function SuperAdminEventApproval() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason }),
       });
-      if (!res.ok) {
-        throw new Error("Failed to reject event");
-      }
+      if (!res.ok) throw new Error("Failed to reject event");
       await fetchPendingEvents();
-      setIsModalOpen(false);
-      setSelectedEvent(null);
-      setRejectionReason("");
+      closeRejectModal();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setError(message);
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setActionInProgress(null);
     }
   };
 
-  /* ------------------------------- MODAL ----------------------------------- */
+  /* ---------------------------- MODAL HANDLERS ----------------------------- */
 
   const openRejectModal = (event: IEvent) => {
     setSelectedEvent(event);
-    setIsModalOpen(true);
+    setIsRejectModalOpen(true);
     setRejectionReason("");
   };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
+  const closeRejectModal = () => {
+    setIsRejectModalOpen(false);
     setSelectedEvent(null);
     setRejectionReason("");
   };
 
-  /* -------------------------------------------------------------------------- */
-  /*                                  GSAP                                       */
-  /* -------------------------------------------------------------------------- */
 
-  // Card hover
-  const handleCardMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    const { clientX, clientY, currentTarget } = event;
+  /* ------------------------------- GSAP ----------------------------------- */
+
+  const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { clientX, clientY, currentTarget } = e;
     const rect = currentTarget.getBoundingClientRect();
-
     const xOffset = clientX - (rect.left + rect.width / 2);
     const yOffset = clientY - (rect.top + rect.height / 2);
 
@@ -157,8 +140,8 @@ export default function SuperAdminEventApproval() {
     });
   };
 
-  const handleCardMouseLeave = (event: React.MouseEvent<HTMLDivElement>) => {
-    gsap.to(event.currentTarget, {
+  const handleCardMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    gsap.to(e.currentTarget, {
       x: 0,
       y: 0,
       rotationY: 0,
@@ -170,7 +153,6 @@ export default function SuperAdminEventApproval() {
     });
   };
 
-  // Refresh button hover
   const handleRefreshButtonHover = () => {
     if (refreshButtonRef.current) {
       gsap.to(refreshButtonRef.current, {
@@ -191,7 +173,6 @@ export default function SuperAdminEventApproval() {
     }
   };
 
-  // Refresh handler (with spin)
   const handleRefresh = () => {
     if (refreshButtonRef.current) {
       gsap.to(refreshButtonRef.current.querySelector("svg"), {
@@ -203,34 +184,24 @@ export default function SuperAdminEventApproval() {
     fetchPendingEvents();
   };
 
-  // Modal animation
   useEffect(() => {
-    if (isModalOpen && modalRef.current) {
+    if (isRejectModalOpen && modalRef.current) {
       gsap.fromTo(
         modalRef.current,
         { y: -20, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }
       );
     }
-  }, [isModalOpen]);
+  }, [isRejectModalOpen]);
 
-  // Initial fetch + cleanup
+  /* ----------------------------- LIFECYCLE -------------------------------- */
+
   useEffect(() => {
     fetchPendingEvents();
-
-    // snapshot card refs now for cleanup
     const cardsSnapshot = [...cardRefs.current];
-
     return () => {
-      cardsSnapshot.forEach((card) => {
-        gsap.to(card, {
-          x: 0,
-          y: 0,
-          rotationY: 0,
-          rotationX: 0,
-          duration: 0.6,
-          ease: "power1.out",
-        });
+      cardsSnapshot.forEach(card => {
+        gsap.to(card, { x: 0, y: 0, rotationY: 0, rotationX: 0, duration: 0.6, ease: "power1.out" });
       });
     };
   }, []);
@@ -245,7 +216,7 @@ export default function SuperAdminEventApproval() {
         <div
           className="w-full h-full bg-repeat-x"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 40' fill='%23654321'%3E%3Cpath d='M0,40 L25,40 L25,20 L35,20 L35,10 L45,10 L45,20 L55,20 L55,40 L75,40 L75,25 L85,25 L85,15 L95,15 L95,25 L105,25 L105,40 L125,40 L125,15 L135,15 L135,5 L145,5 L145,15 L155,15 L155,40 L175,40 L175,20 L185,20 L185,10 L195,10 L195,20 L205,20 L205,40 L225,40 L225,25 L235,25 L235,15 L245,15 L245,25 L255,25 L255,40 L275,40 L275,15 L285,15 L285,5 L295,5 L295,15 L305,15 L305,40 L325,40 L325,20 L335,20 L335,10 L345,10 L345,20 L355,20 L355,40 L375,40 L375,25 L385,25 L385,15 L395,15 L395,25 L405,25 L405,40 L425,40 L425,15 L435,15 L435,5 L445,5 L445,15 L455,15 L455,40 L475,40 L475,20 L485,20 L485,10 L495,10 L495,20 L505,20 L505,40 L525,40 L525,25 L535,25 L535,15 L545,15 L545,25 L555,25 L555,40 L575,40 L575,15 L585,15 L585,5 L595,5 L595,15 L605,15 L605,40 L625,40 L625,20 L635,20 L635,10 L645,10 L645,20 L655,20 L655,40 L675,40 L675,25 L685,25 L685,15 L695,15 L695,25 L705,25 L705,40 L725,40 L725,15 L735,15 L735,5 L745,5 L745,15 L755,15 L755,40 L775,40 L775,20 L785,20 L785,10 L795,10 L795,20 L805,20 L805,40 L825,40 L825,25 L835,25 L835,15 L845,15 L845,25 L855,25 L855,40 L875,40 L875,15 L885,15 L885,5 L895,5 L895,15 L905,15 L905,40 L925,40 L925,20 L935,20 L935,10 L945,10 L945,20 L955,20 L955,40 L975,40 L975,25 L985,25 L985,15 L995,15 L995,25 L1000,25 L1000,40 Z'/%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 40' fill='%23654321'%3E%3Cpath d='...'/.../svg>")`,
             backgroundSize: "1000px 40px",
           }}
         />
@@ -255,34 +226,26 @@ export default function SuperAdminEventApproval() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-[#5d4037]">
-              Event Approval
-            </h1>
-            <p className="text-[#8d6e63] mt-1">
-              Review and manage pending event submissions
-            </p>
+            <h1 className="text-2xl md:text-3xl font-bold text-[#5d4037]">Event Approval</h1>
+            <p className="text-[#8d6e63] mt-1">Review and manage pending event submissions</p>
           </div>
 
           <button
             ref={refreshButtonRef}
             onClick={handleRefresh}
-            className="text-sm text-[#8d6e63] bg-[#f8f5f0] hover:bg-[#e6d7c3] px-3 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
             onMouseEnter={handleRefreshButtonHover}
             onMouseLeave={handleRefreshButtonLeave}
             disabled={loading}
+            className="text-sm text-[#8d6e63] bg-[#f8f5f0] hover:bg-[#e6d7c3] px-3 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
           >
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-            Refresh
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Refresh
           </button>
         </div>
 
         {/* Error state */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start">
-            <AlertTriangle
-              size={20}
-              className="text-red-500 mr-2 mt-0.5 flex-shrink-0"
-            />
+            <AlertTriangle size={20} className="text-red-500 mr-2 mt-0.5 flex-shrink-0" />
             <div>
               <h3 className="font-medium text-red-800">Error</h3>
               <p className="text-red-700 text-sm">{error}</p>
@@ -293,12 +256,8 @@ export default function SuperAdminEventApproval() {
         {/* Loading state */}
         {loading && (
           <div className="bg-white rounded-lg shadow-md p-8 text-center border border-[#e6d7c3]">
-            <div className="animate-spin mb-4 mx-auto">
-              <RefreshCw size={32} className="text-[#8d6e63] mx-auto" />
-            </div>
-            <p className="text-[#5d4037] font-medium">
-              Loading pending events...
-            </p>
+            <div className="animate-spin mb-4 mx-auto"><RefreshCw size={32} /></div>
+            <p className="text-[#5d4037] font-medium">Loading pending events...</p>
           </div>
         )}
 
@@ -308,9 +267,7 @@ export default function SuperAdminEventApproval() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#f8f5f0] flex items-center justify-center">
               <Info size={24} className="text-[#8d6e63]" />
             </div>
-            <h3 className="text-[#5d4037] font-bold text-xl mb-2">
-              No Pending Events
-            </h3>
+            <h3 className="text-[#5d4037] font-bold text-xl mb-2">No Pending Events</h3>
             <p className="text-[#8d6e63]">
               There are no events waiting for approval at the moment.
             </p>
@@ -401,7 +358,7 @@ export default function SuperAdminEventApproval() {
       </div>
 
       {/* -------------------------------- MODAL -------------------------------- */}
-      {isModalOpen && selectedEvent && (
+      {isRejectModalOpen && selectedEvent && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div
             ref={modalRef}
@@ -436,7 +393,7 @@ export default function SuperAdminEventApproval() {
 
             <div className="p-6 border-t border-[#e6d7c3] flex justify-end gap-3">
               <button
-                onClick={closeModal}
+                onClick={closeRejectModal}
                 className="px-4 py-2 border border-[#e6d7c3] rounded-lg text-[#5d4037] hover:bg-[#f8f5f0] transition-colors"
               >
                 Cancel
