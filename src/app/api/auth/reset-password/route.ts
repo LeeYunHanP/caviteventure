@@ -1,44 +1,56 @@
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/dbConnect"; // Adjust the path as needed
-import User from "@/models/User"; // Adjust the path as needed
 import bcrypt from "bcrypt";
+import dbConnect from "@/lib/dbConnect";
+import User from "@/models/User";
 
 export async function POST(req: NextRequest) {
   try {
+    // Connect to MongoDB
     await dbConnect();
-    const { email, newPassword } = await req.json();
 
-    if (!email || !newPassword) {
+    // Parse request body
+    const { email, newPassword } = await req.json();
+    if (!email || typeof email !== "string" || !email.includes("@")) {
       return NextResponse.json(
-        { message: "Email and new password are required." },
+        { message: "A valid email address is required." },
+        { status: 400 }
+      );
+    }
+    if (!newPassword || typeof newPassword !== "string" || newPassword.length !== 8) {
+      return NextResponse.json(
+        { message: "Password must be exactly 8 characters long." },
         { status: 400 }
       );
     }
 
-    // Hash the new password with bcrypt using 10 salt rounds (consistent with sign-up)
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const normalizedEmail = email.trim().toLowerCase();
 
-    // Update the user's hashedPassword in the database based on the provided email
-    const updatedUser = await User.findOneAndUpdate(
-      { email },
-      { hashedPassword },
-      { new: true }
-    );
-
-    if (!updatedUser) {
+    // Find user by email
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
       return NextResponse.json(
         { message: "User not found." },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({
-      message: "Password reset successfully.",
-    });
-  } catch (error) {
-    console.error("Error resetting password:", error);
+    // Hash the new password
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.hashedPassword = hashed;
+    // Optionally clear any existing reset code
+    user.verifyCode = undefined;
+    await user.save();
+
     return NextResponse.json(
-      { message: "Error resetting password." },
+      { message: "Password reset successfully." },
+      { status: 200 }
+    );
+  } catch (err: unknown) {
+    console.error("Error resetting password:", err);
+    return NextResponse.json(
+      { message: "Internal server error." },
       { status: 500 }
     );
   }
