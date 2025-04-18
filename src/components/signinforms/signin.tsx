@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ReCAPTCHA from "react-google-recaptcha";
+import LoadingScreen from "@/components/loadingscreens/loadingmainscreen";
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
 
 // reCAPTCHA site key from .env.local
@@ -10,13 +11,18 @@ const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
 export default function SignInForm() {
   const router = useRouter();
+
+  // Sign‑in form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Forgot Password Flow
+  // New: full‑screen redirect loader
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Forgot‑password flow state
   const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
   const [forgotPasswordStep, setForgotPasswordStep] = useState<1 | 2 | 3>(1);
   const [fpEmail, setFpEmail] = useState("");
@@ -29,11 +35,16 @@ export default function SignInForm() {
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [fpCaptchaToken, setFpCaptchaToken] = useState<string | null>(null);
 
-  // Sign In handler
+  // If we're redirecting, show the full‑screen loader
+  if (isRedirecting) {
+    return <LoadingScreen />;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("");
     setIsLoading(true);
+
     try {
       const res = await fetch("/api/auth/signin", {
         method: "POST",
@@ -41,25 +52,33 @@ export default function SignInForm() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
+
       if (res.ok) {
         setStatus("Sign in successful!");
+        // Short pause so user sees success message, then redirect
         setTimeout(() => {
-          if (data.role === "superadmin") router.push("/superadmindashboard");
-          else if (data.role === "admin") router.push("/dashboard");
-          else router.push("/homepage");
-        }, 1000);
+          setIsRedirecting(true);
+          if (data.role === "superadmin") {
+            router.push("/superadmindashboard");
+          } else if (data.role === "admin") {
+            router.push("/dashboard");
+          } else {
+            router.push("/homepage");
+          }
+        }, 800);
       } else {
         setStatus(data.message || "Sign in error.");
+        setIsLoading(false);
       }
     } catch (err) {
       console.error(err);
       setStatus("An error occurred during sign in.");
-    } finally {
       setIsLoading(false);
     }
   };
 
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+  const togglePasswordVisibility = () => setShowPassword((v) => !v);
+
   const openForgotPasswordModal = () => {
     setForgotPasswordModalOpen(true);
     setForgotPasswordStep(1);
@@ -70,6 +89,7 @@ export default function SignInForm() {
     setFpStatus("");
     setFpCaptchaToken(null);
   };
+
   const handleCancel = () => {
     setForgotPasswordModalOpen(false);
     setForgotPasswordStep(1);
@@ -93,8 +113,9 @@ export default function SignInForm() {
         body: JSON.stringify({ email: fpEmail, captchaToken: fpCaptchaToken }),
       });
       const data = await res.json();
-      if (res.ok) setForgotPasswordStep(2);
-      else {
+      if (res.ok) {
+        setForgotPasswordStep(2);
+      } else {
         setFpStatus(data.message || "Error sending code.");
         setFpCaptchaToken(null);
       }
@@ -118,8 +139,11 @@ export default function SignInForm() {
         body: JSON.stringify({ email: fpEmail, code: fpCode }),
       });
       const data = await res.json();
-      if (res.ok) setForgotPasswordStep(3);
-      else setFpStatus(data.message || "Verification failed.");
+      if (res.ok) {
+        setForgotPasswordStep(3);
+      } else {
+        setFpStatus(data.message || "Verification failed.");
+      }
     } catch {
       setFpStatus("Error verifying code.");
     } finally {
@@ -163,6 +187,7 @@ export default function SignInForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f5f0e6] p-4 sm:p-6 md:p-8">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 sm:p-8 border border-[#e6dfd3] hover:shadow-xl transition">
+        {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto mb-4 bg-[#f8f5f0] rounded-full flex items-center justify-center shadow-sm">
             <LogIn size={28} className="text-[#8d6e63]" />
@@ -171,6 +196,7 @@ export default function SignInForm() {
           <p className="text-[#8d6e63] mt-2">Sign in to your account</p>
         </div>
 
+        {/* Sign‑in Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Email */}
           <div className="space-y-2">
@@ -195,9 +221,7 @@ export default function SignInForm() {
           {/* Password */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <label className="block text-sm font-medium text-[#5d4037]">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-[#5d4037]">Password</label>
               <button
                 type="button"
                 onClick={openForgotPasswordModal}
@@ -265,7 +289,8 @@ export default function SignInForm() {
                 <path
                   className="opacity-75"
                   fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 
+                    7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
             ) : (
@@ -298,9 +323,7 @@ export default function SignInForm() {
               <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full space-y-6">
                 {forgotPasswordStep === 1 && (
                   <form onSubmit={handleSendVerificationCode} className="space-y-4">
-                    <h2 className="text-xl font-bold text-[#5d4037]">
-                      Forgot Password
-                    </h2>
+                    <h2 className="text-xl font-bold text-[#5d4037]">Forgot Password</h2>
                     <p className="text-sm text-[#8d6e63]">
                       Enter your email and complete the CAPTCHA to receive a code.
                     </p>
@@ -350,11 +373,9 @@ export default function SignInForm() {
 
                 {forgotPasswordStep === 2 && (
                   <form onSubmit={handleVerifyCode} className="space-y-4">
-                    <h2 className="text-xl font-bold text-[#5d4037]">
-                      Enter Verification Code
-                    </h2>
+                    <h2 className="text-xl font-bold text-[#5d4037]">Enter Verification Code</h2>
                     <p className="text-sm text-[#8d6e63]">
-                      We&rsquo;ve sent a code to {fpEmail}. Enter it below.
+                      We’ve sent a code to {fpEmail}. Enter it below.
                     </p>
                     <input
                       type="text"
@@ -386,9 +407,7 @@ export default function SignInForm() {
 
                 {forgotPasswordStep === 3 && (
                   <form onSubmit={handleResetPassword} className="space-y-4">
-                    <h2 className="text-xl font-bold text-[#5d4037]">
-                      Reset Password
-                    </h2>
+                    <h2 className="text-xl font-bold text-[#5d4037]">Reset Password</h2>
                     <p className="text-sm text-[#8d6e63]">
                       Enter your new password below (must be exactly 8 characters):
                     </p>
@@ -410,7 +429,7 @@ export default function SignInForm() {
                         />
                         <button
                           type="button"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          onClick={() => setShowNewPassword((v) => !v)}
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8d6e63] hover:text-[#5d4037] transition"
                           aria-label={showNewPassword ? "Hide password" : "Show password"}
                         >
@@ -436,7 +455,7 @@ export default function SignInForm() {
                         />
                         <button
                           type="button"
-                          onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                          onClick={() => setShowConfirmNewPassword((v) => !v)}
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8d6e63] hover:text-[#5d4037] transition"
                           aria-label={showConfirmNewPassword ? "Hide password" : "Show password"}
                         >
