@@ -7,6 +7,16 @@ import { Eye, EyeOff, Mail, User, MapPin, UserPlus } from "lucide-react";
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!;
 
+// All chartered, independent, and component cities in the Philippines
+const cityOptions = [
+  // Highly Urbanized Cities (33)
+  "Angeles City","Bacolod","Baguio","Butuan","Cagayan de Oro","Caloocan","Cebu City","Davao City","General Santos","Iligan","Iloilo City","Lapu-Lapu City","Las Piñas","Lucena","Makati","Malabon","Mandaluyong","Mandaue","Manila","Marikina","Muntinlupa","Navotas","Olongapo","Parañaque","Pasay","Pasig","Puerto Princesa","Quezon City","San Juan","Tacloban","Taguig","Valenzuela","Zamboanga City",
+  // Independent Component Cities (5)
+  "Cotabato City","Dagupan","Naga, Camarines Sur","Ormoc","Santiago",
+  // Component Cities (111)
+  "Alaminos","Antipolo","Bacoor","Bago","Bais","Balanga","Baliwag","Batac","Batangas City","Bayawan","Baybay","Bayugan","Biñan","Bislig","Bogo","Borongan","Cabadbaran","Cabanatuan","Cabuyao","Cadiz","Calaca","Calamba","Calapan","Calbayog","Candon","Canlaon","Carcar","Carmona","Catbalogan","Cauayan","Cavite City","Danao","Dapitan","Dasmariñas","Digos","Dipolog","Dumaguete","El Salvador","Escalante","Gapan","General Trias","Gingoog","Guihulngan","Himamaylan","Ilagan","Imus","Iriga","Isabela","Kabankalan","Kidapawan","Koronadal","La Carlota","Lamitan","Laoag","Legazpi","Ligao","Lipa","Maasin","Mabalacat","Malaybalay","Malolos","Marawi","Masbate City","Mati","Meycauayan","Muñoz","Naga, Cebu","Oroquieta","Ozamiz","Pagadian","Palayan","Panabo","Passi","Roxas","Sagay","Samal","San Carlos, Negros Occidental","San Carlos, Pangasinan","San Fernando, La Union","San Fernando, Pampanga","San Jose, Nueva Ecija","San Jose del Monte","San Pablo","San Pedro","Santa Rosa","Santo Tomas","Silay","Sipalay","Sorsogon City","Surigao City","Tabaco","Tabuk","Tacurong","Tagaytay","Tagbilaran","Tagum","Talisay, Cebu","Talisay, Negros Occidental","Tanauan","Tandag","Tangub","Tanjay","Tarlac City","Tayabas","Toledo","Trece Martires","Tuguegarao","Urdaneta","Valencia","Victorias","Vigan"
+];
+
 export default function SignUpForm() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -103,15 +113,24 @@ export default function SignUpForm() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <MapPin size={18} className="text-[#a1887f]" />
                   </div>
-                  <input
+                  <select
                     id="city"
-                    type="text"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    placeholder="New York"
                     required
-                    className="w-full pl-10 pr-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200"
-                  />
+                    className="w-full pl-10 pr-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200 appearance-none"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238d6e63' strokeLinecap='round' strokeLinejoin='round' strokeWidth='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '1.5em 1.5em',
+                    }}
+                  >
+                    <option value="" disabled>Select your city</option>
+                    {cityOptions.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
