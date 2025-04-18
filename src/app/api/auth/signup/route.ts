@@ -80,8 +80,30 @@ export async function POST(req: NextRequest) {
     try {
       await sendVerificationEmail({ toEmail: email, code: verifyCode });
       console.log("✅ Verification email sent to:", email);
-    } catch (emailError) {
-      console.error("❌ Failed to send verification email:", emailError);
+    } catch (emailError: unknown) {
+      // Enhanced logging without using `any`
+      if (emailError instanceof Error) {
+        // If it's a standard Error, log message and stack
+        const errWithMeta = emailError as Error & { response?: unknown; responseCode?: unknown };
+        console.error("❌ Failed to send verification email:", {
+          message: emailError.message,
+          response: errWithMeta.response,
+          responseCode: errWithMeta.responseCode,
+          stack: emailError.stack,
+        });
+      } else if (emailError && typeof emailError === 'object') {
+        // If it's an object (possibly from Nodemailer), extract known keys
+        const errObj = emailError as Record<string, unknown>;
+        console.error("❌ Failed to send verification email:", {
+          message: 'Non-Error object',
+          response: errObj['response'],
+          responseCode: errObj['responseCode'],
+          details: errObj,
+        });
+      } else {
+        // Fallback for other types (string, number, etc.)
+        console.error("❌ Failed to send verification email:", String(emailError));
+      }
       return NextResponse.json(
         { message: "User created, but failed to send verification email." },
         { status: 500 }
@@ -92,8 +114,12 @@ export async function POST(req: NextRequest) {
       { message: "User created successfully! Check your email for the verification code." },
       { status: 201 }
     );
-  } catch (err) {
-    console.error("Signup error:", err);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error("Signup error:", err);
+    } else {
+      console.error("Signup error (non-Error):", err);
+    }
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
