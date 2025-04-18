@@ -7,6 +7,25 @@ import User from "@/models/User";
 import { sendVerificationEmail } from "@/utils/sendVerificationEmail";
 
 export async function POST(req: NextRequest) {
+  // Ensure all mailing environment variables are set
+  const requiredEnvs = [
+    'SMTP_HOST',
+    'SMTP_PORT',
+    'SMTP_USER',
+    'SMTP_PASS',
+    'MAIL_FROM',
+    'RECAPTCHA_SECRET_KEY',
+  ];
+  for (const key of requiredEnvs) {
+    if (!process.env[key]) {
+      console.error(`Missing ${key} environment variable`);
+      return NextResponse.json(
+        { message: `Server misconfiguration: ${key} is missing.` },
+        { status: 500 }
+      );
+    }
+  }
+
   try {
     const {
       name,
@@ -23,11 +42,7 @@ export async function POST(req: NextRequest) {
     if (!captchaToken) {
       return NextResponse.json({ message: "Missing CAPTCHA token." }, { status: 400 });
     }
-    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
-    if (!secretKey) {
-      console.error("Missing RECAPTCHA_SECRET_KEY in environment");
-      return NextResponse.json({ message: "Server misconfiguration." }, { status: 500 });
-    }
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY!;
     const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captchaToken}`;
     const captchaRes = await fetch(verifyUrl, { method: 'POST' });
     const captchaJson = await captchaRes.json();
@@ -77,38 +92,8 @@ export async function POST(req: NextRequest) {
     });
 
     // Send verification email
-    try {
-      await sendVerificationEmail({ toEmail: email, code: verifyCode });
-      console.log("✅ Verification email sent to:", email);
-    } catch (emailError: unknown) {
-      // Enhanced logging without using `any`
-      if (emailError instanceof Error) {
-        // If it's a standard Error, log message and stack
-        const errWithMeta = emailError as Error & { response?: unknown; responseCode?: unknown };
-        console.error("❌ Failed to send verification email:", {
-          message: emailError.message,
-          response: errWithMeta.response,
-          responseCode: errWithMeta.responseCode,
-          stack: emailError.stack,
-        });
-      } else if (emailError && typeof emailError === 'object') {
-        // If it's an object (possibly from Nodemailer), extract known keys
-        const errObj = emailError as Record<string, unknown>;
-        console.error("❌ Failed to send verification email:", {
-          message: 'Non-Error object',
-          response: errObj['response'],
-          responseCode: errObj['responseCode'],
-          details: errObj,
-        });
-      } else {
-        // Fallback for other types (string, number, etc.)
-        console.error("❌ Failed to send verification email:", String(emailError));
-      }
-      return NextResponse.json(
-        { message: "User created, but failed to send verification email." },
-        { status: 500 }
-      );
-    }
+    await sendVerificationEmail({ toEmail: email, code: verifyCode });
+    console.log("✅ Verification email sent to:", email);
 
     return NextResponse.json(
       { message: "User created successfully! Check your email for the verification code." },
@@ -117,6 +102,13 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     if (err instanceof Error) {
       console.error("Signup error:", err);
+      // If it's a SEND_EMAIL failure, express that specifically
+      if (err.message.includes('Server misconfiguration') || err.message.includes('Missing')) {
+        return NextResponse.json(
+          { message: err.message },
+          { status: 500 }
+        );
+      }
     } else {
       console.error("Signup error (non-Error):", err);
     }
