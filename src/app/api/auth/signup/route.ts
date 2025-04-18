@@ -25,14 +25,14 @@ export async function POST(req: NextRequest) {
     }
     const secretKey = process.env.RECAPTCHA_SECRET_KEY;
     if (!secretKey) {
-      console.error('Missing RECAPTCHA_SECRET_KEY in environment');
+      console.error("Missing RECAPTCHA_SECRET_KEY in environment");
       return NextResponse.json({ message: "Server misconfiguration." }, { status: 500 });
     }
     const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captchaToken}`;
     const captchaRes = await fetch(verifyUrl, { method: 'POST' });
     const captchaJson = await captchaRes.json();
     if (!captchaJson.success) {
-      console.error('reCAPTCHA verification failed:', captchaJson['error-codes']);
+      console.error("reCAPTCHA verification failed:", captchaJson['error-codes']);
       return NextResponse.json({ message: "CAPTCHA verification failed." }, { status: 400 });
     }
 
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Create user
+    // Create user document
     await User.create({
       name,
       email,
@@ -76,8 +76,17 @@ export async function POST(req: NextRequest) {
       verifyCode,
     });
 
-    // Send email
-    await sendVerificationEmail(email, verifyCode);
+    // Send verification email
+    try {
+      await sendVerificationEmail({ toEmail: email, code: verifyCode });
+      console.log("✅ Verification email sent to:", email);
+    } catch (emailError) {
+      console.error("❌ Failed to send verification email:", emailError);
+      return NextResponse.json(
+        { message: "User created, but failed to send verification email." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       { message: "User created successfully! Check your email for the verification code." },
