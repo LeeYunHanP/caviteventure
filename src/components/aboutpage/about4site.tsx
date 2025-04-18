@@ -7,13 +7,16 @@ import { X } from "lucide-react";
 
 // Cloudinary image URLs for historical places
 const cloudinaryImage4 =
-  "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744778789/4_umxt9q.png";
+"https://res.cloudinary.com/dxr6eovhv/image/upload/v1744778788/1_bewzpf.png";
+  
 const cloudinaryImage3 =
-  "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744778789/3_ld9bqo.png";
-const cloudinaryImage1 =
-  "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744778788/1_bewzpf.png";
-const cloudinaryImage2 =
   "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744778788/2_hfrahi.png";
+  
+const cloudinaryImage1 =
+  "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744778789/3_ld9bqo.png";
+const cloudinaryImage2 =
+  
+  "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744778789/4_umxt9q.png";
 
 interface HistoricalPlace {
   image: string;
