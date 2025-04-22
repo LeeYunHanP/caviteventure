@@ -29,7 +29,6 @@ const Contact: React.FC = () => {
   return (
     <div id="contact" className="my-20 min-h-96 w-screen px-10">
       <div className="relative rounded-2xl bg-gradient-to-br from-[#FAE8B4] to-[#CBBD93] py-24 text-[#574A24] sm:overflow-hidden shadow-xl border border-[#CBBD93]/30">
-        {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div
             className="absolute top-[10%] right-[10%] w-64 h-64 rounded-full bg-[#574A24]/5 blur-3xl"
@@ -56,13 +55,10 @@ const Contact: React.FC = () => {
               delay: 1,
             }}
           />
-
-          {/* Subtle pattern overlay */}
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjNTc0QTI0IiBmaWxsLW9wYWNpdHk9IjAuMDIiLz4KPHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiM1NzRBMjQiIGZpbGwtb3BhY2l0eT0iMC4wMiIvPgo8L3N2Zz4=')] opacity-30"></div>
         </div>
 
         <div className="absolute -left-20 top-0 hidden h-full w-72 overflow-hidden sm:block lg:left-20 lg:w-96">
-          {/* Decorative vertical line */}
           <motion.div
             className="absolute left-1/2 top-0 h-full w-[1px] bg-gradient-to-b from-transparent via-[#574A24]/20 to-transparent"
             initial={{ scaleY: 0, opacity: 0 }}
@@ -111,13 +107,20 @@ const Contact: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <Button
-              id="contact-3d-btn"
-              title="3D MUSEUM"
-              containerClass="bg-[#574A24] hover:bg-[#80775C] text-[#FAE8B4] font-medium px-6 py-3 rounded-lg transition-all duration-300 inline-flex items-center gap-2 shadow-md cursor-pointer"
-              leftIcon={<Cube3d className="h-5 w-5" />}
-              rightIcon={null}
-            />
+            <a
+              href="https://arcanemirage.com/project/5908"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                id="contact-3d-btn"
+                title="3D MUSEUM"
+                containerClass="bg-[#574A24] hover:bg-[#80775C] text-[#FAE8B4] font-medium px-6 py-3 rounded-lg transition-all duration-300 inline-flex items-center gap-2 shadow-md cursor-pointer"
+                leftIcon={<Cube3d className="h-5 w-5" />}
+                rightIcon={null}
+              />
+            </a>
+
             <Button
               id="contact-vr-btn"
               title="VIRTUAL REALITY"
