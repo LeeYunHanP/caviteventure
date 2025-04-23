@@ -1,19 +1,12 @@
 // models/VisitorLog.ts
-import { Schema, model, models } from 'mongoose';
+import mongoose from "mongoose";
 
-const VisitorLogSchema = new Schema({
+const VisitorLogSchema = new mongoose.Schema({
   ip: String,
+  page: String,
   userAgent: String,
   referrer: String,
-  page: String,
-  actionType: {
-    type: String,
-    default: 'visited',
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  timestamp: { type: Date, default: Date.now },
+}, { timestamps: true });
 
-export default models.VisitorLog || model('VisitorLog', VisitorLogSchema);
+export default mongoose.models.VisitorLog || mongoose.model("VisitorLog", VisitorLogSchema);

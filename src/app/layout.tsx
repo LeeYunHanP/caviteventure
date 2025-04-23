@@ -6,7 +6,7 @@ import HydrationGate from "@/components/loadingscreens/hydrationgate";
 import Header from "@/components/topheader/header";
 import Bottom from "@/components/bottomheader/bottom";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import LogVisitor from "@/components/LogVisitor"; // 🔥 Add this import
+import LogVisitor from "@/components/LogVisitor";
 import "./globals.css";
 
 const geistSans = Geist({

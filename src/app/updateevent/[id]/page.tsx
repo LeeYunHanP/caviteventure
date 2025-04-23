@@ -1,45 +1,42 @@
 // File: app/updateevent/[id]/page.tsx
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
-import { cookies } from "next/headers";
+import { getServerSession } from "next-auth/next";
+import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import UpdateEventClient from "./UpdateEventClient";
-import dbConnect from "@/lib/dbConnect";
-import Event from "@/models/Event";
 
-export default async function UpdateEventPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  // 1) Wait for the promise
+export default async function UpdateEventPage(
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // In Next.js 15+, params is a Promise
   const { id } = await params;
 
-  // 2) Validate user as admin, etc.
-  const cookieStore = await cookies();
-  const allCookies = cookieStore.getAll();
-  const cookieHeader = allCookies
-    .map(({ name, value }: { name: string; value: string }) => `${name}=${value}`)
-    .join("; ");
-
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://caviteventure.vercel.app/";
-  const authMeUrl = `${baseUrl}/api/auth/me`;
-  const authRes = await fetch(authMeUrl, { headers: { cookie: cookieHeader }, cache: "no-store" });
-  const authData = await authRes.json();
-
-  if (!authData?.isAuthenticated || authData?.user?.role !== "admin") {
-    redirect("/signin");
+  // Check authentication on the server side
+  const session = (await getServerSession()) as Session & { user: { role?: string } } | null;
+  const userRole = session?.user?.role;
+  if (!userRole || (userRole !== 'admin' && userRole !== 'superadmin')) {
+    redirect(`/signin?callbackUrl=/updateevent/${encodeURIComponent(id)}`);
   }
 
-  // 3) Connect to DB & fetch the event
-  await dbConnect();
-  const eventDoc = await Event.findById(id).lean();
-  if (!eventDoc) {
-    redirect("/dashboard");
-  }
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/events/${id}`,
+      { cache: "no-store" }
+    );
 
-  // 4) Pass event to the client component
-  return <UpdateEventClient eventData={JSON.stringify(eventDoc)} />;
+    if (!response.ok) {
+      throw new Error("Failed to fetch event");
+    }
+
+    const event = await response.json();
+    return <UpdateEventClient eventData={JSON.stringify(event)} />;
+  } catch (error) {
+    console.error("Error fetching event:", error);
+    return (
+      <div className="text-center p-8">
+        <h1 className="text-2xl text-red-600">Error loading event</h1>
+        <p className="text-gray-600 mt-2">Please try again later</p>
+      </div>
+    );
+  }
 }

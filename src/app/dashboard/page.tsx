@@ -1,4 +1,3 @@
-/* ── src/app/dashboard/page.tsx ─────────────────────────────────────── */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -8,21 +7,17 @@ import AdminDashboardClient from "./AdminDashboardClient";
 import dbConnect from "@/lib/dbConnect";
 
 export default async function DashboardPage() {
-  /* 1 ▸ absolute origin from request headers ------------------------- */
+  // 1 ▸ absolute origin from request headers
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host");
-  // fallback for build-time/ISR where headers() may be empty
-  const origin =
-    host ??
-    process.env.VERCEL_URL ??
-    "localhost:3000"; // sensible default for local dev
+  const origin = host ?? process.env.VERCEL_URL ?? "localhost:3000";
   const protocol = origin.startsWith("localhost") ? "http" : "https";
-  const baseURL = `${protocol}://${origin}`; // e.g. https://caviteventure.com
+  const baseURL = `${protocol}://${origin}`;
 
-  /* 2 ▸ forward incoming cookies when we cross origins --------------- */
-  const cookieHeader = (await cookies()).toString(); // → "k=v; k2=v2"
+  // 2 ▸ forward incoming cookies
+  const cookieHeader = (await cookies()).toString();
 
-  /* 3 ▸ authentication ---------------------------------------------- */
+  // 3 ▸ authentication
   const authRes = await fetch(`${baseURL}/api/auth/me`, {
     headers: { Cookie: cookieHeader },
     cache: "no-store",
@@ -32,7 +27,7 @@ export default async function DashboardPage() {
   const auth = await authRes.json();
   if (!auth.isAuthenticated || auth.user?.role !== "admin") redirect("/signin");
 
-  /* 4 ▸ dashboard data ---------------------------------------------- */
+  // 4 ▸ dashboard data
   await dbConnect();
   const dashRes = await fetch(`${baseURL}/api/admin/dashboard`, {
     headers: { Cookie: cookieHeader },
@@ -43,7 +38,7 @@ export default async function DashboardPage() {
   const dash = await dashRes.json();
   if (!dash.success) redirect("/signin");
 
-  /* 5 ▸ render ------------------------------------------------------- */
+  // 5 ▸ render client
   return (
     <AdminDashboardClient
       dashboardData={{
@@ -55,6 +50,7 @@ export default async function DashboardPage() {
         comments:    dash.data?.comments    ?? [],
         allUsers:    dash.data?.allUsers    ?? [],
         admins:      dash.data?.admins      ?? [],
+        visitorLogs: dash.data?.visitorLogs ?? [],  // ✅ ensure visitorLogs is passed
       }}
     />
   );

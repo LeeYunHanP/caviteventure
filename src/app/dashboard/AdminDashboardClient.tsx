@@ -2,6 +2,18 @@
 
 import { useState } from "react";
 import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
+import {
   LayoutDashboard,
   MessageSquare,
   Users,
@@ -15,6 +27,8 @@ import {
   User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getWeek } from 'date-fns';
+
 
 /* -------------------------------------------------------------------------- */
 /*                                   TYPES                                    */
@@ -31,11 +45,11 @@ interface IDashboardData {
     createdAt: string;
   }>;
   visitorLogs: Array<{
+    referrer: string;
     _id?: string;
     ip: string;
-    userAgent: string;
-    referrer: string;
     page: string;
+    userAgent: string;
     createdAt: string;
   }>;
   
@@ -92,9 +106,15 @@ export default function AdminDashboardClient({
     comments = [],
     allUsers = [],
     admins = [],
+    visitorLogs = [],
   } = dashboardData || {};
 
   const router = useRouter();
+// For weekly
+
+
+
+
 
   /* ------------------------------- FILTERING ------------------------------- */
   const filteredUsers = allUsers.filter((usr) => usr.role !== "admin");
@@ -102,8 +122,8 @@ export default function AdminDashboardClient({
 
   /* ------------------------------- UI STATE -------------------------------- */
   const [activeSection, setActiveSection] = useState<
-  "overview" | "comments-events" | "all-users" | "all-admins" | "visitor-logs"
->("overview");
+    "overview" | "comments-events" | "all-users" | "all-admins" | "visitor-logs"
+  >("overview");
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -153,9 +173,9 @@ export default function AdminDashboardClient({
     }
   };
 
-  /* ------------------------------ RENDERERS ------------------------------- */
+  /* ----------------------------- RENDERERS ------------------------------- */
   const renderContent = () => {
-    switch (activeSection) {
+    switch (activeSection as string) {
       /* -------------------------------------------------------------------- */
       /*                                OVERVIEW                               */
       /* -------------------------------------------------------------------- */
@@ -243,6 +263,67 @@ export default function AdminDashboardClient({
                 </span>
               </div>
               <div className="overflow-x-auto">
+                {/* Charts Section */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+  {/* Pie Chart - Page Distribution */}
+  <div className="bg-white border border-[#e6dfd3] p-4 rounded-lg shadow-md">
+    <h3 className="text-md font-semibold text-[#5d4037] mb-2">Page Distribution</h3>
+    <ResponsiveContainer width="100%" height={200}>
+      <PieChart>
+        <Pie
+          data={Object.entries(
+            visitorLogs.reduce((acc, log) => {
+              if (!log.page) return acc;
+              acc[log.page] = (acc[log.page] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>)
+          ).map(([page, count]) => ({ name: page, value: count }))}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          outerRadius={70}
+          label
+        >
+          {["#FFB300", "#F4511E", "#5D4037", "#8D6E63"].map((color, idx) => (
+            <Cell key={`cell-${idx}`} fill={color} />
+          ))}
+        </Pie>
+        <Tooltip />
+        <Legend />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
+
+  {/* Daily Visits */}
+  <div className="bg-white border border-[#e6dfd3] p-4 rounded-lg shadow-md col-span-2">
+    <h3 className="text-md font-semibold text-[#5d4037] mb-2">Daily Visits</h3>
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart
+        data={Object.entries(
+          visitorLogs.reduce((acc: Record<string, number>, log) => {
+            try {
+              const date = new Date(log.createdAt);
+              if (!date || isNaN(date.getTime())) return acc;
+              
+              const day = date.toISOString().split('T')[0];
+              acc[day] = (acc[day] || 0) + 1;
+            } catch (error) {
+              console.error('Error processing date:', error);
+            }
+            return acc;
+          }, {})
+        ).map(([date, count]) => ({ date, count }))}
+      >
+        <XAxis dataKey="date" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="count" fill="#FFB300" />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+</div>
+
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-[#f8f5f0] text-[#5d4037]">
@@ -264,30 +345,42 @@ export default function AdminDashboardClient({
                     </tr>
                   </thead>
                   <tbody>
-                    {logs.map((log, idx) => (
-                      <tr
-                        key={`${log._id || "log"}-${log.createdAt}-${idx}`}
-                        className="hover:bg-[#f8f5f0] transition-colors"
-                      >
-                        <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
-                          {log.userId?.name || "Unknown"}
-                        </td>
-                        <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
-                          {log.userId?.email || "N/A"}
-                        </td>
-                        <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
-                          {log.userId?.location || "N/A"}
-                        </td>
-                        <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] capitalize">
-                          <span className="px-2 py-1 bg-[#e6dfd3] text-[#5d4037] rounded-full text-xs">
-                            {log.actionType}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#8d6e63]">
-                          {new Date(log.createdAt).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
+                    {logs.map((log, idx) => {
+                      const formattedDate = (() => {
+                        try {
+                          const date = new Date(log.createdAt);
+                          if (isNaN(date.getTime())) return 'Invalid date';
+                          return date.toLocaleString();
+                        } catch {
+                          return 'Invalid date';
+                        }
+                      })();
+
+                      return (
+                        <tr
+                          key={`${log._id || "log"}-${log.createdAt}-${idx}`}
+                          className="hover:bg-[#f8f5f0] transition-colors"
+                        >
+                          <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
+                            {log.userId?.name || "Unknown"}
+                          </td>
+                          <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
+                            {log.userId?.email || "N/A"}
+                          </td>
+                          <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
+                            {log.userId?.location || "N/A"}
+                          </td>
+                          <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] capitalize">
+                            <span className="px-2 py-1 bg-[#e6dfd3] text-[#5d4037] rounded-full text-xs">
+                              {log.actionType}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#8d6e63]">
+                            {formattedDate}
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {logs.length === 0 && (
                       <tr>
                         <td
@@ -566,74 +659,174 @@ export default function AdminDashboardClient({
             </div>
           </div>
         );
-        case "visitor-logs":
-  return (
-    <div className="space-y-6">
-      <h2 className="text-xl md:text-2xl font-bold text-[#5d4037]">
-        Visitor Logs
-      </h2>
+        case "visitor-logs": {
+          // Simplified data processing with strict validation
+          const processedLogs = visitorLogs.map(log => {
+            try {
+              const date = new Date(log.createdAt);
+              if (isNaN(date.getTime())) {
+                return { ...log, parsedDate: null };
+              }
+              return { ...log, parsedDate: date };
+            } catch {
+              return { ...log, parsedDate: null };
+            }
+          });
 
-      <div className="bg-white rounded-lg shadow-md p-5 border border-[#e6dfd3]">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-[#f8f5f0] text-[#5d4037]">
-                <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
-                  IP Address
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
-                  Page
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
-                  Referrer
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
-                  User Agent
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
-                  Timestamp
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {dashboardData?.visitorLogs?.map((log, idx) => (
-                <tr
-                  key={`${log._id || "visitor"}-${idx}`}
-                  className="hover:bg-[#f8f5f0] transition-colors"
-                >
-                  <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
-                    {log.ip}
-                  </td>
-                  <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
-                    {log.page}
-                  </td>
-                  <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
-                    {log.referrer || "N/A"}
-                  </td>
-                  <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
-                    {log.userAgent.slice(0, 40)}...
-                  </td>
-                  <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#8d6e63]">
-                    {new Date(log.createdAt).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-              {dashboardData?.visitorLogs?.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-3 text-center text-[#8d6e63]"
-                  >
-                    No visitor logs found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+          // Page counts (no date processing needed)
+          const pageCounts = processedLogs.reduce((acc, log) => {
+            acc[log.page] = (acc[log.page] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+
+          // Daily data
+          const dailyData = processedLogs.reduce((acc: Record<string, number>, log) => {
+            if (!log.parsedDate) return acc;
+            const day = log.parsedDate.toISOString().split('T')[0];
+            acc[day] = (acc[day] || 0) + 1;
+            return acc;
+          }, {});
+
+          // Weekly data
+          const weeklyData = processedLogs.reduce((acc: Record<string, number>, log) => {
+            if (!log.parsedDate) return acc;
+            const week = `${log.parsedDate.getFullYear()} W${getWeek(log.parsedDate)}`;
+            acc[week] = (acc[week] || 0) + 1;
+            return acc;
+          }, {});
+
+          // Monthly data
+          const monthlyData = processedLogs.reduce((acc: Record<string, number>, log) => {
+            if (!log.parsedDate) return acc;
+            const month = log.parsedDate.toISOString().slice(0, 7);
+            acc[month] = (acc[month] || 0) + 1;
+            return acc;
+          }, {});
+
+          // Convert to chart format
+          const pageChartData = Object.entries(pageCounts)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+
+          const dailyChartData = Object.entries(dailyData)
+            .map(([date, count]) => ({ date, count }))
+            .sort((a, b) => a.date.localeCompare(b.date));
+
+          const weeklyChartData = Object.entries(weeklyData)
+            .map(([week, count]) => ({ week, count }))
+            .sort((a, b) => a.week.localeCompare(b.week));
+
+          const monthlyChartData = Object.entries(monthlyData)
+            .map(([month, count]) => ({ month, count }))
+            .sort((a, b) => a.month.localeCompare(b.month));
+
+          return (
+            <div className="space-y-6">
+              <h2 className="text-xl md:text-2xl font-bold text-[#5d4037]">Visitor Logs</h2>
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Pie: Page Distribution */}
+                <div className="bg-white p-4 rounded-lg shadow-md border border-[#e6dfd3]">
+                  <h3 className="font-medium mb-2 text-[#5d4037]">Page Distribution</h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={pageChartData}
+                        dataKey="value"
+                        nameKey="name"
+                        outerRadius={70}
+                        label
+                      >
+                        {pageChartData.map((_, idx) => (
+                          <Cell key={idx} fill={['#FFB300','#F4511E','#5D4037','#8D6E63'][idx%4]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bar: Daily Visits */}
+                <div className="bg-white p-4 rounded-lg shadow-md border border-[#e6dfd3]">
+                  <h3 className="font-medium mb-2 text-[#5d4037]">Daily Visits</h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={dailyChartData}>
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="#FFB300" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bar: Weekly Visits */}
+                <div className="bg-white p-4 rounded-lg shadow-md border border-[#e6dfd3]">
+                  <h3 className="font-medium mb-2 text-[#5d4037]">Weekly Visits</h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={weeklyChartData}>
+                      <XAxis dataKey="week" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="#F4511E" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Bar: Monthly Visits */}
+                <div className="bg-white p-4 rounded-lg shadow-md border border-[#e6dfd3] lg:col-span-2">
+                  <h3 className="font-medium mb-2 text-[#5d4037]">Monthly Visits</h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={monthlyChartData}>
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="#5D4037" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Raw Logs Table */}
+              <div className="bg-white rounded-lg shadow-md p-5 border border-[#e6dfd3]">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-[#f8f5f0] text-[#5d4037]">
+                        <th className="px-4 py-3 text-left">IP Address</th>
+                        <th className="px-4 py-3 text-left">Page</th>
+                        <th className="px-4 py-3 text-left">User Agent</th>
+                        <th className="px-4 py-3 text-left">Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {processedLogs.map((log, idx) => (
+                        <tr key={`${log._id}-${idx}`} className="hover:bg-[#f8f5f0]">
+                          <td className="px-4 py-3 text-sm text-[#5d4037]">{log.ip}</td>
+                          <td className="px-4 py-3 text-sm text-[#5d4037]">{log.page}</td>
+                          <td className="px-4 py-3 text-sm text-[#5d4037]">{log.userAgent}</td>
+                          <td className="px-4 py-3 text-sm text-[#5d4037]">
+                            {log.parsedDate ? log.parsedDate.toLocaleString() : 'Invalid date'}
+                          </td>
+                        </tr>
+                      ))}
+                      {processedLogs.length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-3 text-center text-[#8d6e63]">
+                            No visitor logs found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        
+
 
 
       /* -------------------------------------------------------------------- */
@@ -655,42 +848,21 @@ export default function AdminDashboardClient({
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-[#f8f5f0] text-[#5d4037]">
-                      <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
-                        Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
-                        Email
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
-                        Gender
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
-                        Location
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
-                        Role
-                      </th>
+                      <th className="px-4 py-3">Name</th>
+                      <th className="px-4 py-3">Email</th>
+                      <th className="px-4 py-3">Gender</th>
+                      <th className="px-4 py-3">Location</th>
+                      <th className="px-4 py-3">Role</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAdmins.map((adm) => (
-                      <tr
-                        key={adm._id || adm.email}
-                        className="hover:bg-[#f8f5f0] transition-colors"
-                      >
-                        <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037] font-medium">
-                          {adm.name}
-                        </td>
-                        <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
-                          {adm.email}
-                        </td>
-                        <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037] capitalize">
-                          {adm.gender}
-                        </td>
-                        <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
-                          {adm.location}
-                        </td>
-                        <td className="px-4 py-3 text-sm border-b border-[#e6dfd3]">
+                      <tr key={adm._id || adm.email} className="hover:bg-[#f8f5f0]">
+                        <td className="px-4 py-3">{adm.name}</td>
+                        <td className="px-4 py-3">{adm.email}</td>
+                        <td className="px-4 py-3 capitalize">{adm.gender}</td>
+                        <td className="px-4 py-3">{adm.location}</td>
+                        <td className="px-4 py-3">
                           <span className="px-2 py-1 bg-[#8d6e63] text-white rounded-full text-xs">
                             {adm.role}
                           </span>
@@ -699,10 +871,7 @@ export default function AdminDashboardClient({
                     ))}
                     {filteredAdmins.length === 0 && (
                       <tr>
-                        <td
-                          colSpan={5}
-                          className="px-4 py-3 text-center text-[#8d6e63]"
-                        >
+                        <td colSpan={5} className="px-4 py-3 text-center text-[#8d6e63]">
                           No admins found
                         </td>
                       </tr>
@@ -714,11 +883,9 @@ export default function AdminDashboardClient({
           </div>
         );
 
-      /* -------------------------------------------------------------------- */
       default:
         return null;
     }
-    
   };
 
   

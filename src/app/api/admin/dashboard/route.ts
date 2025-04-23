@@ -1,17 +1,14 @@
-
 // File: app/api/admin/dashboard/route.ts
 
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
-// Example placeholders; swap for your real models
 import User from "@/models/User";
 import Event from "@/models/Event";
 import Log from "@/models/Log";
 import Comment from "@/models/Comment";
-
-// Helper for verifying admin from session token
+import VisitorLog from "@/models/VisitorLog"; // ✅ NEW IMPORT
 import { getUserIdByToken } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
@@ -41,37 +38,31 @@ export async function GET(req: NextRequest) {
 
     // 5) If admin, gather all needed data
 
-    // -- Count total users, total male, total female
     const totalUsers = await User.countDocuments({});
     const totalMale = await User.countDocuments({ gender: "male" });
     const totalFemale = await User.countDocuments({ gender: "female" });
 
-    // -- Logs (who created, edited, deleted events)
-    //    Let's assume each Log doc has: 
-    //    { userId, actionType, eventId, timestamp } 
-    //    Then we can populate the user’s name, email, location, etc.
     const logs = await Log.find({})
       .sort({ createdAt: -1 })
       .populate("userId", "name email location")
       .lean();
 
-    // -- All posted events
     const events = await Event.find({}).sort({ createdAt: -1 }).lean();
 
-    // -- Comments on events (assuming a separate Comment model)
-    //    Each comment might reference a userId, eventId, plus text
-    //    We'll just fetch them all for the example
     const comments = await Comment.find({})
       .sort({ createdAt: -1 })
       .populate("userId", "name email")
       .populate("eventId", "title")
       .lean();
 
-    // -- All users
     const allUsers = await User.find({}).select("name email gender location role").lean();
-
-    // -- All admins
     const admins = await User.find({ role: "admin" }).select("name email gender location role").lean();
+
+    // ✅ Fetch Visitor Logs
+    const visitorLogs = await VisitorLog.find({})
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
 
     // 6) Return the combined data
     return NextResponse.json({
@@ -85,6 +76,7 @@ export async function GET(req: NextRequest) {
         comments,
         allUsers,
         admins,
+        visitorLogs, // ✅ included
       },
     });
   } catch (err) {
