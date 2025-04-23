@@ -5,7 +5,7 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import AnimatedTitle from "./animatedtitle"
 import Button from "./button"
-import { CuboidIcon as Cube3d, Glasses } from "lucide-react"
+import { CuboidIcon as Cube3d } from "lucide-react"
 
 interface ImageClipBoxProps {
   src: string
