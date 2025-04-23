@@ -121,13 +121,6 @@ const Contact: React.FC = () => {
               />
             </a>
 
-            <Button
-              id="contact-vr-btn"
-              title="VIRTUAL REALITY"
-              containerClass="bg-[#CBBD93]/80 hover:bg-[#CBBD93] text-[#574A24] font-medium px-6 py-3 rounded-lg transition-all duration-300 inline-flex items-center gap-2 shadow-md cursor-pointer border border-[#574A24]/10"
-              leftIcon={<Glasses className="h-5 w-5" />}
-              rightIcon={null}
-            />
           </motion.div>
         </div>
       </div>
