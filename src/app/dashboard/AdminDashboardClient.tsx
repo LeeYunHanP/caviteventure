@@ -30,6 +30,15 @@ interface IDashboardData {
     actionType?: string;
     createdAt: string;
   }>;
+  visitorLogs: Array<{
+    _id?: string;
+    ip: string;
+    userAgent: string;
+    referrer: string;
+    page: string;
+    createdAt: string;
+  }>;
+  
   events: Array<{
     _id: string;
     title: string;
@@ -93,8 +102,9 @@ export default function AdminDashboardClient({
 
   /* ------------------------------- UI STATE -------------------------------- */
   const [activeSection, setActiveSection] = useState<
-    "overview" | "comments-events" | "all-users" | "all-admins"
-  >("overview");
+  "overview" | "comments-events" | "all-users" | "all-admins" | "visitor-logs"
+>("overview");
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   /* ----------------------------- ACTION HANDLERS --------------------------- */
@@ -556,6 +566,75 @@ export default function AdminDashboardClient({
             </div>
           </div>
         );
+        case "visitor-logs":
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl md:text-2xl font-bold text-[#5d4037]">
+        Visitor Logs
+      </h2>
+
+      <div className="bg-white rounded-lg shadow-md p-5 border border-[#e6dfd3]">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#f8f5f0] text-[#5d4037]">
+                <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
+                  IP Address
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
+                  Page
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
+                  Referrer
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
+                  User Agent
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium border-b border-[#e6dfd3]">
+                  Timestamp
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {dashboardData?.visitorLogs?.map((log, idx) => (
+                <tr
+                  key={`${log._id || "visitor"}-${idx}`}
+                  className="hover:bg-[#f8f5f0] transition-colors"
+                >
+                  <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
+                    {log.ip}
+                  </td>
+                  <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
+                    {log.page}
+                  </td>
+                  <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
+                    {log.referrer || "N/A"}
+                  </td>
+                  <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#5d4037]">
+                    {log.userAgent.slice(0, 40)}...
+                  </td>
+                  <td className="px-4 py-3 text-sm border-b border-[#e6dfd3] text-[#8d6e63]">
+                    {new Date(log.createdAt).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+              {dashboardData?.visitorLogs?.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-3 text-center text-[#8d6e63]"
+                  >
+                    No visitor logs found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
 
       /* -------------------------------------------------------------------- */
       /*                              ALL ADMINS                               */
@@ -639,7 +718,10 @@ export default function AdminDashboardClient({
       default:
         return null;
     }
+    
   };
+
+  
 
   /* ------------------------------------------------------------------------ */
   return (
@@ -671,6 +753,20 @@ export default function AdminDashboardClient({
         </div>
         <nav className="p-4">
           <div className="space-y-1">
+          <button
+  onClick={() => {
+    setActiveSection("visitor-logs");
+    setSidebarOpen(false);
+  }}
+  className={`flex items-center w-full text-left px-4 py-3 rounded-lg transition-colors ${
+    activeSection === "visitor-logs"
+      ? "bg-[#8d6e63] text-white font-medium"
+      : "text-[#5d4037] hover:bg-[#f8f5f0]"
+  }`}
+>
+  <BarChart3 size={18} className="mr-3" />
+  Visitor Logs
+</button>
             <button
               onClick={() => {
                 setActiveSection("overview");

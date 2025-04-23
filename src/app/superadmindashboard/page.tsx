@@ -4,6 +4,7 @@ import dbConnect from "@/lib/dbConnect";
 import { getUserIdByToken } from "@/lib/auth";
 import SuperAdminDashboardClient from "./SuperAdminDashboardClient";
 import User from "@/models/User";
+import VisitorLog from "@/models/VisitorLog"; // ✅ Import the visitor log model
 
 export default async function SuperAdminDashboardPage() {
   // 1) Connect to DB
@@ -43,14 +44,28 @@ export default async function SuperAdminDashboardPage() {
     redirect("/signin");
   }
 
-  // Example placeholder data. 
-  // Notice we've renamed `events` to `approvedEvents` to match your client code
+  // 6) Fetch visit logs from the database
+  const rawLogs = await VisitorLog.find().sort({ createdAt: -1 }).limit(50).lean();
+
+  const logs = rawLogs.map((log) => ({
+    _id: log._id?.toString(),
+    action: log.actionType || "visited", // ✅ FIXED: action instead of actionType
+    createdAt: log.createdAt,
+    userId: {
+      name: "Visitor",
+      email: log.ip || "unknown",
+      location: log.page || "unknown",
+    },
+  }));
+  
+
+  // Final dashboard data
   const finalData = {
     totalUsers: 100,
     totalMale: 60,
     totalFemale: 40,
-    logs: [],
-    approvedEvents: [],
+    logs,
+    approvedEvents: [], // You can add real events here later
     allUsers: [],
     admins: [],
   };
@@ -59,8 +74,6 @@ export default async function SuperAdminDashboardPage() {
 
   return (
     <div>
-      
-      {/* Pass finalData down as a prop named dashboardData */}
       <SuperAdminDashboardClient dashboardData={finalData} />
     </div>
   );

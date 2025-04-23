@@ -6,6 +6,7 @@ import HydrationGate from "@/components/loadingscreens/hydrationgate";
 import Header from "@/components/topheader/header";
 import Bottom from "@/components/bottomheader/bottom";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import LogVisitor from "@/components/LogVisitor"; // 🔥 Add this import
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,6 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {/* 🔍 Log visitor info */}
+        <LogVisitor />
+
         {/* 1️⃣ Streaming: LoadingScreen until server components finish */}
         <Suspense fallback={<LoadingScreen />}>
           {/* 2️⃣ Hydration: keep LoadingScreen until the page is interactive */}
@@ -44,6 +48,7 @@ export default function RootLayout({
             <Bottom />
           </HydrationGate>
         </Suspense>
+
         {/* 3️⃣ Vercel Speed Insights */}
         <SpeedInsights />
       </body>
