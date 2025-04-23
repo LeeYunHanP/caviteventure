@@ -156,58 +156,80 @@ export default function SignUpForm() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-[#5d4037]">Email</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail size={18} className="text-[#a1887f]" />
-                </div>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  required
-                  className="w-full pl-10 pr-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200"
-                />
-              </div>
-            </div>
+  <label htmlFor="email" className="block text-sm font-medium text-[#5d4037]">
+    Email
+  </label>
+  <div className="relative">
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <Mail size={18} className="text-[#a1887f]" />
+    </div>
+    <input
+      id="email"
+      type="email"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      placeholder="name@example.com"
+      required
+      pattern="^[A-Za-z0-9._%+-]+@(gmail\.com|yahoo\.com)$"
+      title="Please enter a valid Gmail or Yahoo email address"
+      className="w-full pl-10 pr-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200"
+    />
+  </div>
+</div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-2 relative">
-                <label htmlFor="password" className="block text-sm font-medium text-[#5d4037]">Password (max 8 chars)</label>
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => e.target.value.length <= 8 && setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full px-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200 pr-10"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 px-3 flex items-center text-[#8d6e63] hover:text-[#5d4037] transition-colors"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
-                </button>
-              </div>
 
-              <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#5d4037]">Confirm Password</label>
-                <input
-                  id="confirmPassword"
-                  type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => e.target.value.length <= 8 && setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full px-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200"
-                />
-              </div>
-            </div>
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+  <div className="space-y-2 relative">
+    <label htmlFor="password" className="block text-sm font-medium text-[#5d4037]">
+      Password (8–16 chars, include a special character)
+    </label>
+    {/* Password must be 8–16 characters and include at least one non-alphanumeric */}
+    <input
+      id="password"
+      type={showPassword ? "text" : "password"}
+      value={password}
+      onChange={e => {
+        const v = e.target.value;
+        if (v.length <= 16) setPassword(v);
+      }}
+      placeholder="••••••••"
+      required
+      pattern="^(?=.*[^A-Za-z0-9]).{8,16}$"
+      title="8–16 characters, and include at least one special character"
+      className="w-full px-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200 pr-10"
+    />
+    <button
+      type="button"
+      className="absolute inset-y-0 right-0 px-3 flex items-center text-[#8d6e63] hover:text-[#5d4037] transition-colors"
+      onClick={() => setShowPassword(!showPassword)}
+    >
+      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+      <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+    </button>
+  </div>
+
+  <div className="space-y-2">
+    <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#5d4037]">
+      Confirm Password
+    </label>
+    {/* Same rule for confirmation */}
+    <input
+      id="confirmPassword"
+      type={showPassword ? "text" : "password"}
+      value={confirmPassword}
+      onChange={e => {
+        const v = e.target.value;
+        if (v.length <= 16) setConfirmPassword(v);
+      }}
+      placeholder="••••••••"
+      required
+      pattern="^(?=.*[^A-Za-z0-9]).{8,16}$"
+      title="8–16 characters, and include at least one special character"
+      className="w-full px-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200"
+    />
+  </div>
+</div>
+
 
             <div className="flex items-start space-x-3 pt-2">
               <div className="flex items-center h-5">
