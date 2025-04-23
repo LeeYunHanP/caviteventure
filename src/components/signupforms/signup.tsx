@@ -167,11 +167,11 @@ export default function SignUpForm() {
       id="email"
       type="email"
       value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      placeholder="name@example.com"
+      onChange={e => setEmail(e.target.value)}
+      placeholder="name@gmail.com"
       required
       pattern="^[A-Za-z0-9._%+-]+@(gmail\.com|yahoo\.com)$"
-      title="Please enter a valid Gmail or Yahoo email address"
+      title="Please enter a valid Gmail or Yahoo address (must end in .com)"
       className="w-full pl-10 pr-3 py-3 border border-[#e6dfd3] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8d6e63] focus:border-transparent bg-[#faf6f0] transition-all duration-200"
     />
   </div>
