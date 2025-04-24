@@ -170,15 +170,15 @@ export default function About() {
         >
           <div className="space-y-6">
             <h3 className="text-2xl font-light text-[#574A24] border-l-4 border-[#CBBD93] pl-4">Our Mission</h3>
-            <p className="text-[#80775C] leading-relaxed">
+            <p className="text-2xl leading-relaxed">
               To preserve and showcase the rich cultural heritage of Cavite through immersive experiences that educate,
               inspire, and connect visitors with the region&apos;s storied past. We aim to make history accessible and
               engaging for all generations.
             </p>
           </div>
           <div className="space-y-6">
-            <h3 className="text-2xl font-light text-[#574A24] border-l-4 border-[#CBBD93] pl-4">Our Vision</h3>
-            <p className="text-[#80775C] leading-relaxed">
+            <h3 className="text-3xl text-[#574A24] border-l-4 border-[#574A24] pl-4">Our Vision</h3>
+            <p className="text-2xl leading-relaxed">
               To become the premier destination for historical tourism in the Philippines, where visitors can embark on
               a journey through time, experiencing the pivotal moments and cultural treasures that have shaped
               Cavite&apos;s identity and contributed to the nation&apos;s history.

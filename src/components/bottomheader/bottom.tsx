@@ -162,7 +162,6 @@ const Footer = () => {
               {[
                 { name: "Exhibitions", path: "/exhibitpage" },
                 { name: "Events", path: "/eventpage" },
-                { name: "Collections", path: "/collections" },
                 { name: "About Us", path: "/about" },
               ].map(({ name, path }, index) => (
                 <motion.div

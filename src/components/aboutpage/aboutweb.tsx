@@ -3,10 +3,6 @@ import { motion } from "framer-motion"
 import Shrine from "@/components/aboutpage/aboutshrine/shrine"
 
 const AboutUs = () => {
-  const scrollToExplore = () => {
-    const exploreSection = document.getElementById("explore")
-    exploreSection?.scrollIntoView({ behavior: "smooth" })
-  }
 
   // Variant for "slide in" from the right or left
   const slideIn = {
@@ -105,19 +101,6 @@ const AboutUs = () => {
             animate="visible"
             transition={{ delay: 0.8 }}
           >
-            <motion.button
-              onClick={scrollToExplore}
-              whileHover={{
-                scale: 1.05,
-                backgroundColor: "#654321",
-                color: "#f5f0e5",
-                boxShadow: "0px 8px 20px rgba(101, 67, 33, 0.3)",
-              }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-[#f5f0e5] text-[#654321] border-2 border-[#8B4513] font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-lg"
-            >
-              Explore More
-            </motion.button>
           </motion.div>
         </div>
 

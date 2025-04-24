@@ -105,7 +105,7 @@ export default function FloatingImage() {
                 transition={spring}
               />
               <motion.img
-                src="https://res.cloudinary.com/dxr6eovhv/image/upload/v1744777448/product-image_ltfqke.png"
+                src="https://res.cloudinary.com/dxr6eovhv/image/upload/v1745508052/main_sraumz.png"
                 alt="Historical Cavite Illustration"
                 className="w-full h-full object-cover"
                 style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}

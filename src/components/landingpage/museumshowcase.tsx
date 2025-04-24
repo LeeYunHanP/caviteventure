@@ -20,7 +20,7 @@ const cloudinaryLoader = ({ src, width }: { src: string; width?: number }) => {
 
 // Cloudinary image URLs
 const productImage =
-  "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744777448/product-image_ltfqke.png";
+  "https://res.cloudinary.com/dxr6eovhv/image/upload/v1745508052/Screenshot_2025-04-22_163336_df6qlb.png";
 const tubeImage =
   "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744777447/tube_kwbpkf.png";
 const pyramidImage =

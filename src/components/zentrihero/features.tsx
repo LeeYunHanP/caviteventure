@@ -123,7 +123,7 @@ const Features = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="font-medium text-lg text-[#574A24] mb-3"
+            className="font-medium text-3xl text-[#574A24] mb-3"
           >
             Explore Cavite&apos;s Heritage
           </motion.p>
@@ -132,7 +132,7 @@ const Features = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="max-w-md text-lg text-[#80775C] leading-relaxed"
+            className="max-w-md text-3xl text-[#80775C] leading-relaxed"
           >
             Immerse yourself in a rich and ever-expanding universe of historical sites and cultural landmarks that
             showcase the vibrant heritage of Cavite province.

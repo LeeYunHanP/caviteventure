@@ -8,8 +8,6 @@ import { motion } from "framer-motion";
 // Cloudinary image URLs for updated assets
 const iconMap =
   "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744778019/iconmapremove_t28kfn.png";
-const iconRound =
-  "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744778019/iconround_ynr3lo.png";
 
 /**
  * Cloudinary Image Loader
@@ -76,8 +74,7 @@ const ExhibitPro: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
           >
-            Enjoy exploring the history of Cavite in both <strong>3D</strong> and{" "}
-            <strong>Augmented Reality</strong>. Experience a{" "}
+            Enjoy exploring the history of Cavite in <strong>3D</strong> Experience a{" "}
             <strong>modern discovery of the past</strong> through{" "}
             <strong>Cavite Venture</strong>.
           </motion.p>
@@ -117,44 +114,6 @@ const ExhibitPro: React.FC = () => {
                 Explore Cavite&apos;s history in a <strong>3D museum</strong> and interact with digital exhibits.
               </p>
               {hoveredCard === 1 && (
-                <motion.div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(203, 189, 147, 0.5), transparent 200px)`,
-                  }}
-                />
-              )}
-            </motion.div>
-          </Link>
-
-          {/* Augmented Reality Card */}
-          <Link href="/signup" passHref>
-            <motion.div
-              ref={(el) => {
-                containerRefs.current[2] = el;
-              }}
-              className="bg-white shadow-lg rounded-xl w-full sm:w-[300px] md:w-[400px] lg:w-[500px] h-[320px] sm:h-[380px] lg:h-[450px] flex flex-col items-center justify-center relative overflow-hidden cursor-pointer p-6 hover:shadow-2xl transition-all duration-500"
-              onMouseMove={(e) => handleMouseMove(e, 2)}
-              onMouseEnter={() => setHoveredCard(2)}
-              onMouseLeave={() => setHoveredCard(null)}
-              whileHover={{ scale: 1.05 }}
-              custom={2}
-              variants={cardVariants}
-            >
-              <Image
-                loader={cloudinaryLoader}
-                src={iconRound}
-                width={220}
-                height={220}
-                alt="Augmented Reality"
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 220px"
-                priority
-              />
-              <h3 className="mt-4 font-bold text-lg sm:text-xl">Augmented Reality</h3>
-              <p className="mt-2 text-sm sm:text-base lg:text-lg text-gray-700 text-center">
-                Experience <strong>Augmented Reality</strong> to uncover Cavite&apos;s rich history like never before.
-              </p>
-              {hoveredCard === 2 && (
                 <motion.div
                   className="absolute inset-0 pointer-events-none"
                   style={{
