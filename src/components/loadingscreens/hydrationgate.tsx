@@ -1,4 +1,4 @@
-// app/components/loadingscreens/HydrationGate.tsx
+// app/components/loadingscreens/hydrationgate.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,15 +14,19 @@ export default function HydrationGate({
 
   useEffect(() => {
     try {
-      // Wait for next tick to ensure full hydration
       const timeout = setTimeout(() => {
         setHydrated(true);
       }, 0);
 
       return () => clearTimeout(timeout);
-    } catch (err: any) {
-      console.error("Hydration error:", err);
-      setError("There was a problem loading the page.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Hydration error:", err.message);
+        setError("There was a problem loading the page.");
+      } else {
+        console.error("Unknown error during hydration");
+        setError("There was a problem loading the page.");
+      }
     }
   }, []);
 
