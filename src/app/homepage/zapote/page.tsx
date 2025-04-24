@@ -215,12 +215,12 @@ const ZapotePage = () => {
         <p className="text-lg text-gray-600 text-center">
           Information sourced from{" "}
           <a
-            href="https://en.wikipedia.org/wiki/Battle_of_Binakayan%E2%80%93Dalahican"
+            href="https://en.wikipedia.org/wiki/Zapote_River_(Philippines)"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-500 underline"
           >
-            Wikipedia: Battle of Binakayan–Dalahican
+            Wikipedia: Zapote Bridge
           </a>
         </p>
       </div>

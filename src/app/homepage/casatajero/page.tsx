@@ -213,12 +213,12 @@ const CasaDeTajeros: React.FC = () => {
         <p className="text-lg text-gray-600 text-center">
           Information sourced from{" "}
           <a
-            href="https://en.wikipedia.org/wiki/Cavite"
+            href="https://en.wikipedia.org/wiki/Tejeros_Convention"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-500 underline"
           >
-            Wikipedia: Cavite
+            Wikipedia: Casa Hacienda De Tejeros
           </a>{" "}
           and local historical records.
         </p>

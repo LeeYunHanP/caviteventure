@@ -35,21 +35,26 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* ✅ Security fallback meta headers (not a replacement for HTTP headers) */}
+        <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
+        <meta httpEquiv="X-Frame-Options" content="SAMEORIGIN" />
+        <meta name="referrer" content="strict-origin-when-cross-origin" />
+        <meta name="permissions-policy" content="geolocation=(), camera=(), microphone=()" />
+        <meta
+          httpEquiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; object-src 'none';"
+        />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* 🔍 Log visitor info */}
         <LogVisitor />
-
-        {/* 1️⃣ Streaming: LoadingScreen until server components finish */}
         <Suspense fallback={<LoadingScreen />}>
-          {/* 2️⃣ Hydration: keep LoadingScreen until the page is interactive */}
           <HydrationGate>
             <Header />
             {children}
             <Bottom />
           </HydrationGate>
         </Suspense>
-
-        {/* 3️⃣ Vercel Speed Insights */}
         <SpeedInsights />
       </body>
     </html>

@@ -136,7 +136,7 @@ const CasaDeTajero: React.FC = () => {
               region. With its unique architecture and storied past, this site continues to inspire visitors and
               preserve its legacy.
             </p>
-            <Link href="/homepage/casadetajero">
+            <Link href="/homepage/casatajero">
               <div className="flex items-center text-[#80775C] font-medium group w-fit cursor-pointer">
                 <span className="mr-2 uppercase text-sm tracking-wider">More About</span>
                 <motion.div whileHover={{ x: 5 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>

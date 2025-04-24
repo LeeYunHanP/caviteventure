@@ -182,12 +182,12 @@ const SanRoquePage = () => {
         <p className="text-lg text-gray-600 text-center">
           Information sourced from{" "}
           <a
-            href="https://en.wikipedia.org/wiki/Cavite"
+            href="https://en.wikipedia.org/wiki/San_Roque_Church_(Cavite_City)"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-500 underline"
           >
-            Wikipedia: Cavite
+            Wikipedia: San Roque Chruch Cavite City
           </a>{" "}
           and local historical archives.
         </p>
