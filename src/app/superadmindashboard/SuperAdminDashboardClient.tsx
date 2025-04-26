@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+
 import {
   LayoutDashboard,
   Calendar,
@@ -128,6 +129,42 @@ export default function SuperAdminDashboardClient({ dashboardData }: SuperAdminD
 
   // Utility to get a count by site id
   const getCount = (id: string) => siteCounts.find((c) => c.id === id)?.count || 0
+const {
+    totalUsers = 0,
+    totalMale = 0,
+    totalFemale = 0,
+    approvedEvents = [],
+    logs = [],
+    allUsers = [],
+    admins = [],
+  } = fetchedData || dashboardData
+   // ─── CSV DOWNLOAD FOR EVENT LOGS ────────────────────────────────
+  const downloadCsv = useCallback(() => {
+      if (!logs || logs.length === 0) return;
+  
+      // build CSV rows
+      const header = ["Action","User","Timestamp"];
+      const rows = logs.map((log) => {
+        const action = log.action;
+        const user   = log.userId?.name || "N/A";
+        const tsDate = new Date(log.createdAt);
+        const ts     = isNaN(tsDate.getTime())
+          ? "Invalid date"
+          : tsDate.toLocaleString();
+        return [action, user, ts]
+          .map(f => `"${f.replace(/"/g, '""')}"`)
+          .join(",");
+      });
+  
+      const csv     = [header.join(","), ...rows].join("\r\n");
+      const blob    = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url     = URL.createObjectURL(blob);
+      const anchor  = document.createElement("a");
+      anchor.href   = url;
+      anchor.download = `event-logs_${new Date().toISOString().slice(0,10)}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    }, [logs]);
 
   const handleMakeAdmin = async (userId: string) => {
     if (!confirm("Are you sure you want to make this user an admin?")) return
@@ -236,15 +273,7 @@ export default function SuperAdminDashboardClient({ dashboardData }: SuperAdminD
   }
 
   // Safely destructure the data from fetchedData (or fallback to the prop if fetchedData is null)
-  const {
-    totalUsers = 0,
-    totalMale = 0,
-    totalFemale = 0,
-    approvedEvents = [],
-    logs = [],
-    allUsers = [],
-    admins = [],
-  } = fetchedData || dashboardData
+  
 
   // If you want only the first 5 logs in the "Recent Actions" block:
   const recentLogs = logs.slice(0, 5)
@@ -435,6 +464,59 @@ export default function SuperAdminDashboardClient({ dashboardData }: SuperAdminD
                 </table>
               </motion.div>
             </div>
+            {/* ─── FULL EVENT LOGS TABLE ─────────────────────────────────── */}
+            <div className="mt-8 bg-white rounded-lg shadow-md p-5 border border-[#CBBD93]/30">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[#574A24] flex items-center">
+                 <Clipboard size={18} className="mr-2" />
+                  Event Logs
+                </h3>
+                <button
+                  onClick={downloadCsv}
+                   className="inline-flex items-center px-3 py-1 text-sm font-medium rounded-md
+                             bg-blue-600 text-white hover:bg-blue-700
+                             disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Download CSV
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse">
+                  <thead>
+                    <tr className="bg-[#FAE8B4]/30">
+                     <th className="px-4 py-3 text-left text-[#574A24] font-medium">Action</th>
+                     <th className="px-4 py-3 text-left text-[#574A24] font-medium">User</th>
+                      <th className="px-4 py-3 text-left text-[#574A24] font-medium">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.length > 0 ? (
+                      logs.map((log, idx) => (
+                        <tr
+                          key={idx}
+                          className="hover:bg-[#FAE8B4]/10 border-b border-[#CBBD93]/20"
+                        >
+                          <td className="px-4 py-3 text-[#574A24]">{log.action}</td>
+                          <td className="px-4 py-3 text-[#80775C]">
+                            {log.userId?.name || "N/A"}
+                          </td>
+                          <td className="px-4 py-3 text-[#80775C]">
+                            {new Date(log.createdAt).toLocaleString()}
+                          </td>
+                       </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="text-center px-4 py-4 text-[#80775C]">
+                          No event logs found.
+                        </td>
+                      </tr>
+                   )}
+                 </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         )
 

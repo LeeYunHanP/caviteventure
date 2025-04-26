@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getWeek } from 'date-fns';
+import { useCallback } from "react";
+
 
 
 /* -------------------------------------------------------------------------- */
@@ -91,11 +93,17 @@ type IEvent = IDashboardData["events"][number];
 /*                               MAIN COMPONENT                               */
 /* -------------------------------------------------------------------------- */
 
+  
+
+
 export default function AdminDashboardClient({
-  dashboardData,
+  dashboardData = {},
 }: {
   dashboardData?: Partial<IDashboardData>;
 }) {
+
+  
+  
   /* ----------------------------- DESCTRUCTURING ---------------------------- */
   const {
     totalUsers = 0,
@@ -110,6 +118,34 @@ export default function AdminDashboardClient({
   } = dashboardData || {};
 
   const router = useRouter();
+
+  const downloadCsv = useCallback(() => {
+    if (logs.length === 0) return;
+
+    const header = ["User Name","Email","Location","Action","Timestamp"];
+    const rows = logs.map((log) => {
+      const name     = log.userId?.name     || "Unknown User";
+      const email    = log.userId?.email    || "No Email";
+      const location = log.userId?.location || "No Location";
+      const action   = log.actionType       || "";
+      const ts       = isNaN(new Date(log.createdAt).getTime())
+        ? "Invalid date"
+        : new Date(log.createdAt).toLocaleString();
+      return [name,email,location,action,ts]
+        .map(f => `"${f.replace(/"/g,'""')}"`)
+        .join(",");
+    });
+
+    const csv = [header.join(","), ...rows].join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `logs_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [logs]);  // ← logs in deps array
+  
 // For weekly
 
 
@@ -261,6 +297,17 @@ export default function AdminDashboardClient({
                 <span className="text-xs text-[#8d6e63] bg-[#f8f5f0] px-2 py-1 rounded-full">
                   {logs.length} entries
                 </span>
+                <button
+      onClick={downloadCsv}
+      disabled={!logs || logs.length === 0}
+      className="
+        inline-flex items-center px-3 py-1 text-sm font-medium rounded-md
+        bg-blue-600 text-white hover:bg-blue-700 focus:outline-none
+        disabled:opacity-50 disabled:cursor-not-allowed
+      "
+    >
+      Download CSV
+    </button>
               </div>
               <div className="overflow-x-auto">
                 {/* Charts Section */}
