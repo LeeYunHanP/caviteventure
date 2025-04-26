@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence, useMotionValue } from "framer-motion";
 import { X } from "lucide-react";
 
-// — FRONT (card) IMAGE URLs (unchanged) —
+// — FRONT (card) IMAGE URLs —
 const cloudinaryImage4 =
   "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744778788/1_bewzpf.png";
 const cloudinaryImage3 =
@@ -26,9 +26,8 @@ const modalSanRoque =
   "https://res.cloudinary.com/dxr6eovhv/image/upload/v1744810301/sanroque1_wyz0fz.jpg";
 
 interface HistoricalPlace {
-  // front card
+  id: string;
   thumb: string;
-  // lightbox/modal
   modalImage: string;
   alt: string;
   title: string;
@@ -38,6 +37,7 @@ interface HistoricalPlace {
 
 const historicalPlaces: HistoricalPlace[] = [
   {
+    id: "binakayan",
     thumb: cloudinaryImage4,
     modalImage: modalBinakayan,
     alt: "Battle of Binakayan",
@@ -47,6 +47,7 @@ const historicalPlaces: HistoricalPlace[] = [
       "The Battle of Binakayan was a decisive Filipino victory during the Philippine Revolution against Spanish colonial rule. Led by Emilio Aguinaldo and Artemio Ricarte, Filipino revolutionary forces successfully defended their positions in Binakayan and Dalahican against Spanish attacks. This victory boosted Filipino morale and demonstrated their military capabilities. The battle is considered one of the most significant early victories of the revolution, as it secured Filipino control over key areas in Cavite province and forced Spanish troops to retreat to Manila. Today, the site stands as a testament to Filipino courage and determination in their fight for independence.",
   },
   {
+    id: "zapote-bridge",
     thumb: cloudinaryImage3,
     modalImage: modalZapote,
     alt: "Battle of Zapote Bridge",
@@ -56,6 +57,7 @@ const historicalPlaces: HistoricalPlace[] = [
       "The Zapote River and Bridge remains to be a silent witness to two fierce battles. The first was the battle against Spain on February 17, 1897. One of the unsung heroes who fought fiercely against the Spaniards was Bacoor’s Katipunan leader Gil Ignacio. This first battle also saw the death of more than 450 Filipinos that included the civil engineer turned Lieutenant General Edilberto Evangelista. Two years later, on June 13, 1899, another battle was fought here by the Filipinos, this time against the Americans. The new colonizers were commanded by Major General Henry W. Lawton. Dubbed as the second largest battle of the Philippine-American War, the Filipino army was led by General Artemio Ricarte, General Guillermo Masangkay, and Bacoor City’s very own, General Mariano Noriel.",
   },
   {
+    id: "casa-tejero",
     thumb: cloudinaryImage1,
     modalImage: modalCasa,
     alt: "Casa Tejero",
@@ -65,19 +67,20 @@ const historicalPlaces: HistoricalPlace[] = [
       "Casa Tejero in Cavite was the site of the historic Tejeros Convention, a significant event in Philippine history. On March 22, 1897, revolutionary leaders gathered here to establish the first Philippine Republic and elect its officers. This convention marked a crucial transition from the Katipunan revolutionary society to a formal government structure. Emilio Aguinaldo was elected as President, while Andrés Bonifacio, the founder of the Katipunan, was elected as Director of the Interior. However, his qualifications were questioned, leading to a dramatic split in the revolutionary movement. The historic building represents a pivotal moment in the birth of Philippine democracy and the complex path to independence.",
   },
   {
+    id: "san-roque",
     thumb: cloudinaryImage2,
     modalImage: modalSanRoque,
     alt: "San Roque Church",
     title: "San Roque Church",
     year: "Established 1586",
     description:
-      "San Roque Church in Cavite is one of the oldest churches in the Philippines, with its origins dating back to 1602. Named after Saint Roch (San Roque), the patron saint of the sick, the church has stood as a spiritual beacon for centuries. The church features Spanish colonial architecture with thick stone walls, buttresses, and ornate religious artwork. Throughout its history, San Roque Church has survived wars, natural disasters, and the passage of time, becoming not just a place of worship but a living museum of Filipino faith and resilience. The church continues to serve the community today, hosting religious ceremonies and standing as a testament to Cavite&aposs rich cultural and religious heritage.",
+      "San Roque Church in Cavite is one of the oldest churches in the Philippines, with its origins dating back to 1602. Named after Saint Roch (San Roque), the patron saint of the sick, the church has stood as a spiritual beacon for centuries. The church features Spanish colonial architecture with thick stone walls, buttresses, and ornate religious artwork. Throughout its history, San Roque Church has survived wars, natural disasters, and the passage of time, becoming not just a place of worship but a living museum of Filipino faith and resilience. The church continues to serve the community today, hosting religious ceremonies and standing as a testament to Cavite’s rich cultural and religious heritage.",
   },
 ];
 
 const HistoricalCard: React.FC<{
   place: HistoricalPlace;
-  onOpen: (place: HistoricalPlace) => void;
+  onOpen: (place: HistoricalPlace) => Promise<void>;
 }> = ({ place, onOpen }) => {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -136,13 +139,26 @@ const HistoricalCard: React.FC<{
 const CenterAbout: React.FC = () => {
   const [selected, setSelected] = useState<HistoricalPlace | null>(null);
 
-  const openImage = (place: HistoricalPlace) => {
+  const openImage = async (place: HistoricalPlace) => {
+    // record click in MongoDB
+    try {
+      await fetch('/api/clicks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: place.id }),
+      });
+    } catch (err) {
+      console.error('Failed to record click', err);
+    }
+
+    // open modal
     setSelected(place);
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden';
   };
+
   const closeImage = () => {
     setSelected(null);
-    document.body.style.overflow = "auto";
+    document.body.style.overflow = 'auto';
   };
 
   return (
@@ -153,7 +169,7 @@ const CenterAbout: React.FC = () => {
           className="w-full h-full bg-repeat-x"
           style={{
             backgroundImage:
-              'url("data:image/svg+xml,%3Csvg xmlns=\&aposhttp://www.w3.org/2000/svg\&apos viewBox=\&apos0 0 1000 40\&apos fill=\&apos%23654321\&apos%3E…%3C/svg%3E")',
+              'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1000 40\' fill=\'%23654321\'%3E…%3C/svg%3E")',
             backgroundSize: "1000px 40px",
           }}
         />
@@ -170,8 +186,8 @@ const CenterAbout: React.FC = () => {
         </motion.h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {historicalPlaces.map((place, i) => (
-            <HistoricalCard key={i} place={place} onOpen={openImage} />
+          {historicalPlaces.map((place) => (
+            <HistoricalCard key={place.id} place={place} onOpen={openImage} />
           ))}
         </div>
       </div>
@@ -192,7 +208,7 @@ const CenterAbout: React.FC = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 25 }}
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-[#8B4513]/20 bg-[#654321]">
@@ -235,7 +251,7 @@ const CenterAbout: React.FC = () => {
                   </p>
                   <div className="mt-6 w-full h-1 bg-gradient-to-r from-transparent via-[#8B4513]/30 to-transparent" />
                   <p className="mt-4 text-center text-[#654321] text-sm italic">
-                    Visit this historical site to experience Cavite&aposs rich heritage
+                    Visit this historical site to experience Cavite’s rich heritage
                   </p>
                 </div>
               </div>
@@ -246,7 +262,7 @@ const CenterAbout: React.FC = () => {
                   className="w-full h-full bg-repeat-x"
                   style={{
                     backgroundImage:
-                      'url("data:image/svg+xml,%3Csvg xmlns=\&aposhttp://www.w3.org/2000/svg\&apos viewBox=\&apos0 0 1000 40\&apos fill=\&apos%23654321\&apos%3E…%3C/svg%3E")',
+                      'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1000 40\' fill=\'%23654321\'%3E…%3C/svg%3E")',
                     backgroundSize: "1000px 40px",
                     transform: "rotate(180deg)",
                   }}

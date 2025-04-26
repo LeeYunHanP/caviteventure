@@ -55,6 +55,12 @@ interface IDashboardData {
   admins: User[]
 }
 
+interface SiteCount {
+  id: string
+  count: number
+}
+
+
 // 2) Define props for your component
 interface SuperAdminDashboardClientProps {
   dashboardData: IDashboardData
@@ -62,6 +68,7 @@ interface SuperAdminDashboardClientProps {
 
 export default function SuperAdminDashboardClient({ dashboardData }: SuperAdminDashboardClientProps) {
   const [fetchedData, setFetchedData] = useState<IDashboardData | null>(dashboardData)
+  const [siteCounts, setSiteCounts] = useState<SiteCount[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [actionInProgress, setActionInProgress] = useState<string | null>(null)
@@ -89,8 +96,20 @@ export default function SuperAdminDashboardClient({ dashboardData }: SuperAdminD
     }
   }
 
+  const fetchSiteCounts = async () => {
+    try {
+      const res = await fetch("/api/clicks")
+      if (!res.ok) throw new Error("Failed to fetch site click counts")
+      const json = await res.json()
+      setSiteCounts(json.data || [])
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   useEffect(() => {
     fetchDashboardData()
+    fetchSiteCounts()
   }, [])
 
   useEffect(() => {
@@ -104,7 +123,11 @@ export default function SuperAdminDashboardClient({ dashboardData }: SuperAdminD
 
   const handleRefresh = () => {
     fetchDashboardData()
+    fetchSiteCounts()
   }
+
+  // Utility to get a count by site id
+  const getCount = (id: string) => siteCounts.find((c) => c.id === id)?.count || 0
 
   const handleMakeAdmin = async (userId: string) => {
     if (!confirm("Are you sure you want to make this user an admin?")) return
@@ -342,6 +365,31 @@ export default function SuperAdminDashboardClient({ dashboardData }: SuperAdminD
                 </div>
               </motion.div>
             </div>
+
+             {/* Site Click Counts Section */}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold text-[#574A24] mb-4 flex items-center">
+          <Clock className="mr-2 h-5 w-5 text-[#80775C]" /> Site Clicks
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }} className="bg-white rounded-lg shadow-md p-5 border border-[#CBBD93]/30">
+            <h3 className="font-medium text-[#574A24]">Binakayan</h3>
+            <p className="text-3xl font-bold text-[#574A24] mt-2">{getCount('binakayan')}</p>
+          </motion.div>
+          <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }} className="bg-white rounded-lg shadow-md p-5 border border-[#CBBD93]/30">
+            <h3 className="font-medium text-[#574A24]">Zapote Bridge</h3>
+            <p className="text-3xl font-bold text-[#574A24] mt-2">{getCount('zapote-bridge')}</p>
+          </motion.div>
+          <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }} className="bg-white rounded-lg shadow-md p-5 border border-[#CBBD93]/30">
+            <h3 className="font-medium text-[#574A24]">Casa Tejero</h3>
+            <p className="text-3xl font-bold text-[#574A24] mt-2">{getCount('casa-tejero')}</p>
+          </motion.div>
+          <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }} className="bg-white rounded-lg shadow-md p-5 border border-[#CBBD93]/30">
+            <h3 className="font-medium text-[#574A24]">San Roque Church</h3>
+            <p className="text-3xl font-bold text-[#574A24] mt-2">{getCount('san-roque')}</p>
+          </motion.div>
+        </div>
+      </div>
 
             {/* Recent Logs Section */}
             <div className="mt-8">
@@ -913,6 +961,7 @@ export default function SuperAdminDashboardClient({ dashboardData }: SuperAdminD
             <Shield size={18} className="inline mr-2" />
             Admins
           </motion.button>
+          
         </div>
       </aside>
 
