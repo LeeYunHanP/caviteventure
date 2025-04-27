@@ -166,6 +166,46 @@ const {
       URL.revokeObjectURL(url);
     }, [logs]);
 
+    // ─── CSV DOWNLOAD FOR APPROVED EVENTS ────────────────────────────────
+const downloadApprovedCsv = useCallback(() => {
+  if (approvedEvents.length === 0) return
+
+  const header = [
+    "Title",
+    "Description",
+    "Date",
+    "Location",
+    "Created By",
+    "Approved By",
+  ]
+  const rows = approvedEvents.map((event) => {
+    const vals = [
+      event.title,
+      event.description || "",
+      new Date(event.date).toLocaleDateString(),
+      event.location,
+      event.createdBy?.name || "",
+      event.approvedBy?.name || "",
+    ]
+    return vals
+      .map((f) => `"${f.replace(/"/g, '""')}"`)
+      .join(",")
+  })
+
+  const csvBlob = new Blob(
+    [ [header.join(","), ...rows].join("\r\n") ],
+    { type: "text/csv;charset=utf-8;" }
+  )
+  const url = URL.createObjectURL(csvBlob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `approved-events_${new Date().toISOString().slice(0,10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}, [approvedEvents])
+// ────────────────────────────────────────────────────────────────────
+
+
   const handleMakeAdmin = async (userId: string) => {
     if (!confirm("Are you sure you want to make this user an admin?")) return
     setActionInProgress(userId)
@@ -520,100 +560,144 @@ const {
           </div>
         )
 
-      case "approvedEvents":
-        return (
-          <div className="space-y-6">
-            {/* Success message */}
-            <AnimatePresence>
-              {successMessage && (
-                <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-start"
-                >
-                  <CheckCircle2 size={20} className="text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+        case "approvedEvents":
+          return (
+            <div className="space-y-6">
+              {/* Success message */}
+              <AnimatePresence>
+                {successMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-start"
+                  >
+                    <CheckCircle2
+                      size={20}
+                      className="text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <div>
+                      <p className="text-green-700">{successMessage}</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+  
+              {/* Error message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start">
+                  <AlertTriangle
+                    size={20}
+                    className="text-red-500 mr-2 mt-0.5 flex-shrink-0"
+                  />
                   <div>
-                    <p className="text-green-700">{successMessage}</p>
+                    <h3 className="font-medium text-red-800">Error</h3>
+                    <p className="text-red-700 text-sm">{error}</p>
                   </div>
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
-
-            {/* Error message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start">
-                <AlertTriangle size={20} className="text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="font-medium text-red-800">Error</h3>
-                  <p className="text-red-700 text-sm">{error}</p>
+  
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl md:text-2xl font-bold text-[#574A24] flex items-center">
+                  <Calendar className="mr-2 h-6 w-6 text-[#80775C]" />
+                  Approved Events
+                </h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={downloadApprovedCsv}
+                    disabled={approvedEvents.length === 0}
+                    className="px-3 py-1 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Download CSV
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleRefresh}
+                    className="text-sm text-[#574A24] bg-[#FAE8B4]/50 hover:bg-[#CBBD93]/50 px-3 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+                  >
+                    <RefreshCw size={16} />
+                    Refresh
+                  </motion.button>
                 </div>
               </div>
-            )}
-
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl md:text-2xl font-bold text-[#574A24] flex items-center">
-                <Calendar className="mr-2 h-6 w-6 text-[#80775C]" />
-                Approved Events
-              </h2>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleRefresh}
-                className="text-sm text-[#574A24] bg-[#FAE8B4]/50 hover:bg-[#CBBD93]/50 px-3 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+  
+              <motion.div
+                whileHover={{
+                  boxShadow:
+                    "0 10px 25px -5px rgba(87, 74, 36, 0.1), 0 8px 10px -6px rgba(87, 74, 36, 0.05)",
+                }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-lg shadow-md p-5 border border-[#CBBD93]/30 overflow-x-auto transition-all duration-300"
               >
-                <RefreshCw size={16} />
-                Refresh
-              </motion.button>
-            </div>
-
-            <motion.div
-              whileHover={{
-                boxShadow: "0 10px 25px -5px rgba(87, 74, 36, 0.1), 0 8px 10px -6px rgba(87, 74, 36, 0.05)",
-              }}
-              transition={{ duration: 0.2 }}
-              className="bg-white rounded-lg shadow-md p-5 border border-[#CBBD93]/30 overflow-x-auto transition-all duration-300"
-            >
-              <table className="min-w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#FAE8B4]/30">
-                    <th className="px-4 py-3 text-left text-[#574A24] font-medium">Title</th>
-                    <th className="px-4 py-3 text-left text-[#574A24] font-medium">Description</th>
-                    <th className="px-4 py-3 text-left text-[#574A24] font-medium">Date</th>
-                    <th className="px-4 py-3 text-left text-[#574A24] font-medium">Location</th>
-                    <th className="px-4 py-3 text-left text-[#574A24] font-medium">Created By</th>
-                    <th className="px-4 py-3 text-left text-[#574A24] font-medium">Approved By</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {approvedEvents.length > 0 ? (
-                    approvedEvents.map((event: EventData) => (
-                      <tr key={event._id} className="hover:bg-[#FAE8B4]/10 border-b border-[#CBBD93]/20">
-                        <td className="px-4 py-3 text-[#574A24] font-medium">{event.title}</td>
-                        <td className="px-4 py-3 text-[#80775C]">
-                          {(event.description || "").length > 50
-                            ? (event.description || "").substring(0, 50) + "..."
-                            : event.description || "No description"}
-                        </td>
-                        <td className="px-4 py-3 text-[#80775C]">{new Date(event.date).toLocaleDateString()}</td>
-                        <td className="px-4 py-3 text-[#80775C]">{event.location}</td>
-                        <td className="px-4 py-3 text-[#80775C]">{event.createdBy?.name || "N/A"}</td>
-                        <td className="px-4 py-3 text-[#80775C]">{event.approvedBy?.name || "N/A"}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="text-center px-4 py-4 text-[#80775C]">
-                        No approved events found.
-                      </td>
+                <table className="min-w-full border-collapse">
+                  <thead>
+                    <tr className="bg-[#FAE8B4]/30">
+                      <th className="px-4 py-3 text-left text-[#574A24] font-medium">
+                        Title
+                      </th>
+                      <th className="px-4 py-3 text-left text-[#574A24] font-medium">
+                        Description
+                      </th>
+                      <th className="px-4 py-3 text-left text-[#574A24] font-medium">
+                        Date
+                      </th>
+                      <th className="px-4 py-3 text-left text-[#574A24] font-medium">
+                        Location
+                      </th>
+                      <th className="px-4 py-3 text-left text-[#574A24] font-medium">
+                        Created By
+                      </th>
+                      <th className="px-4 py-3 text-left text-[#574A24] font-medium">
+                        Approved By
+                      </th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </motion.div>
-          </div>
-        )
+                  </thead>
+                  <tbody>
+                    {approvedEvents.length > 0 ? (
+                      approvedEvents.map((event: EventData) => (
+                        <tr
+                          key={event._id}
+                          className="hover:bg-[#FAE8B4]/10 border-b border-[#CBBD93]/20"
+                        >
+                          <td className="px-4 py-3 text-[#574A24] font-medium">
+                            {event.title}
+                          </td>
+                          <td className="px-4 py-3 text-[#80775C]">
+                            {(event.description || "").length > 50
+                              ? (event.description || "").substring(0, 50) + "..."
+                              : event.description || "No description"}
+                          </td>
+                          <td className="px-4 py-3 text-[#80775C]">
+                            {new Date(event.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3 text-[#80775C]">
+                            {event.location}
+                          </td>
+                          <td className="px-4 py-3 text-[#80775C]">
+                            {event.createdBy?.name || "N/A"}
+                          </td>
+                          <td className="px-4 py-3 text-[#80775C]">
+                            {event.approvedBy?.name || "N/A"}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="text-center px-4 py-4 text-[#80775C]"
+                        >
+                          No approved events found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </motion.div>
+            </div>
+          )
 
       case "logs":
         return (
