@@ -357,7 +357,7 @@ const downloadApprovedCsv = useCallback(() => {
             <div className="flex justify-between items-center">
               <h2 className="text-xl md:text-2xl font-bold text-[#574A24] flex items-center">
                 <BarChart3 className="mr-2 h-6 w-6 text-[#80775C]" />
-                Dashboard Overview
+                Event Trial
               </h2>
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -1061,7 +1061,7 @@ const downloadApprovedCsv = useCallback(() => {
             }`}
           >
             <LayoutDashboard size={18} className="inline mr-2" />
-            Overview
+            EventTrial
           </motion.button>
           <motion.button
             whileHover={{ x: 5 }}
