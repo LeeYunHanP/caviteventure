@@ -10,7 +10,7 @@ const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!;
 // All chartered, independent, and component cities in the Philippines
 const cityOptions = [
   // Highly Urbanized Cities (33)
-  "Angeles City","Bacolod","Baguio","Butuan","Cagayan de Oro","Caloocan","Cebu City","Davao City","General Santos","Iligan","Iloilo City","Lapu-Lapu City","Las Piñas","Lucena","Makati","Malabon","Mandaluyong","Mandaue","Manila","Marikina","Muntinlupa","Navotas","Olongapo","Parañaque","Pasay","Pasig","Puerto Princesa","Quezon City","San Juan","Tacloban","Taguig","Valenzuela","Zamboanga City",
+  "Angeles City","Bacolod","Baguio","Butuan","Cagayan de Oro","Caloocan","Cebu City","Davao City","General Santos","Iligan","Iloilo City","Kawit","Lapu-Lapu City","Las Piñas","Lucena","Makati","Malabon","Mandaluyong","Mandaue","Manila","Marikina","Muntinlupa","Navotas","Olongapo","Parañaque","Pasay","Pasig","Puerto Princesa","Quezon City","San Juan","Tacloban","Taguig","Valenzuela","Zamboanga City",
   // Independent Component Cities (5)
   "Cotabato City","Dagupan","Naga, Camarines Sur","Ormoc","Santiago",
   // Component Cities (111)
