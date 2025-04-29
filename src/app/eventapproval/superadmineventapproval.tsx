@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Info,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 /* -------------------------------------------------------------------------- */
 /*                                   TYPES                                    */
@@ -37,6 +38,7 @@ export default function SuperAdminEventApproval() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const [approvedId, setApprovedId] = useState<string | null>(null);
 
   const [selectedEvent, setSelectedEvent] = useState<IEvent | null>(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -77,8 +79,13 @@ export default function SuperAdminEventApproval() {
   const handleApprove = async (eventId: string) => {
     setActionInProgress(eventId);
     try {
-      const res = await fetch(`/api/events/${eventId}/approve`, { method: "PATCH" });
+      const res = await fetch(`/api/events/${eventId}/approve`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
       if (!res.ok) throw new Error("Failed to approve event");
+      const { event } = await res.json();       // ← grab the updated event
+      setApprovedId(event._id);                  // ← stash its _id
       await fetchPendingEvents();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -86,6 +93,14 @@ export default function SuperAdminEventApproval() {
       setActionInProgress(null);
     }
   };
+  
+  useEffect(() => {
+    if (approvedId) {
+      const t = setTimeout(() => setApprovedId(null), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [approvedId]);
+  
 
   const handleReject = async (eventId: string, reason: string) => {
     setActionInProgress(eventId);
@@ -212,7 +227,9 @@ export default function SuperAdminEventApproval() {
 
   return (
     <div className="min-h-screen bg-[#f5f0e5] p-4 md:p-6 relative">
+      
       <div className="absolute top-0 left-0 w-full h-12 overflow-hidden opacity-10 pointer-events-none">
+        
         <div
           className="w-full h-full bg-repeat-x"
           style={{
@@ -221,6 +238,28 @@ export default function SuperAdminEventApproval() {
           }}
         />
       </div>
+
+      <AnimatePresence>
+
+        
+  {approvedId && (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className="fixed top-4 left-1/2 transform -translate-x-1/2
+                 bg-green-50 border border-green-200 rounded-lg p-4
+                 flex items-start z-50"
+    >
+      <Check size={20} className="text-green-500 mr-2 mt-0.5" />
+      <p className="text-green-700">
+        Event approved! ID: {approvedId}
+      </p>
+    </motion.div>
+  )}
+</AnimatePresence>
+
 
       {/* Header row */}
       <div className="max-w-7xl mx-auto">

@@ -1,4 +1,5 @@
 // File: src/app/api/superadmin/eventapproval/route.ts
+
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
@@ -36,8 +37,12 @@ export async function GET(): Promise<NextResponse> {
     );
   }
 
-  // 5) (Your approval‐listing logic here…)
-  const pendingToApprove = await Event.find({ status: "pending" }).lean();
+  // 5) Fetch pending events *and* populate createdBy & approvedBy
+  const pendingToApprove = await Event.find({ status: "pending" })
+    .populate({ path: "createdBy", select: "name" })
+    .populate({ path: "approvedBy", select: "name" })  // will be null until approved
+    .lean();
 
+  // 6) Return them
   return NextResponse.json({ pendingToApprove });
 }

@@ -1,4 +1,5 @@
 // File: src/app/api/superadmin/dashboard/route.ts
+
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
@@ -65,12 +66,20 @@ export async function GET(): Promise<NextResponse> {
   const totalUsers = await User.countDocuments({});
   const totalMale = await User.countDocuments({ gender: "male" });
   const totalFemale = await User.countDocuments({ gender: "female" });
-  const approvedEvents = await Event.find({ status: "approved" }).lean();
+
+  // Populate createdBy and approvedBy so the client sees { name }
+  const approvedEvents = await Event
+    .find({ status: "approved" })
+    .populate({ path: "createdBy", select: "name" })
+    .populate({ path: "approvedBy", select: "name" })
+    .lean();
+
   const logs = await Log.find({
     action: { $in: ["create event", "approve event"] },
   })
     .populate("userId", "name email")
     .lean();
+
   const allUsers = await User.find({}).lean();
   const admins = await User.find({ role: "admin" }).lean();
 

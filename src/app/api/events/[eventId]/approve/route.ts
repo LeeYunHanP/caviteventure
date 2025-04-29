@@ -1,47 +1,75 @@
-// File: src/app/api/events/[eventId]/approve/route.ts
-
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
 import dbConnect from "@/lib/dbConnect";
+import { getUserIdByToken } from "@/lib/auth";
 import Event from "@/models/Event";
+import mongoose from "mongoose";
 
 export async function PATCH(
   request: Request,
-  // params is a Promise in the App Router
   { params }: { params: Promise<{ eventId: string }> }
 ): Promise<NextResponse> {
   try {
-    // await the params promise to get your dynamic ID
+    // 1) Resolve the dynamic route param
     const { eventId } = await params;
 
+    // 2) Connect to your database
     await dbConnect();
 
+    // 3) Validate the incoming ID
     if (!mongoose.Types.ObjectId.isValid(eventId)) {
-      return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid event ID" },
+        { status: 400 }
+      );
     }
 
-    const { adminId } = await request.json();
-    if (!mongoose.Types.ObjectId.isValid(adminId)) {
-      return NextResponse.json({ error: "Invalid admin ID" }, { status: 400 });
+    // 4) Authenticate user via sessionToken
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("sessionToken")?.value;
+    if (!sessionToken) {
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+    const userId = await getUserIdByToken(sessionToken);
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Invalid session token" },
+        { status: 401 }
+      );
     }
 
+    // 5) Approve the event and set approvedBy
     const updatedEvent = await Event.findByIdAndUpdate(
       eventId,
-      { status: "approved", approvedBy: adminId },
+      { status: "approved", approvedBy: new mongoose.Types.ObjectId(userId) },
       { new: true }
-    )
-      .populate({ path: "createdBy", select: "name" })
-      .populate({ path: "approvedBy", select: "name" })
-      .lean();
+    ).lean();
 
+    // 6) If nothing was found, return 404
     if (!updatedEvent) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Event not found" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json(updatedEvent, { status: 200 });
+    // 7) Return the updated record (including its database _id & approvedBy)
+    return NextResponse.json(
+      {
+        message: "Event approved successfully",
+        event: updatedEvent
+      },
+      { status: 200 }
+    );
   } catch (err: unknown) {
     console.error("Error approving event:", err);
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    );
   }
 }
