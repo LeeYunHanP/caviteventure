@@ -9,17 +9,34 @@ export interface IEvent extends Document {
   location: string;
   image?: string;
   status: "approved" | "pending" | "rejected";
+  createdBy: Types.ObjectId;
+  approvedBy?: Types.ObjectId;
 }
 
 const EventSchema = new Schema<IEvent>(
   {
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    date: { type: Date, required: true },
-    time: { type: String, required: true },
-    location: { type: String, required: true },
-    image: String,
-    status: { type: String, default: "pending", enum: ["approved", "pending", "rejected"] },
+    title:        { type: String, required: true },
+    description:  { type: String, required: true },
+    date:         { type: Date,   required: true },
+    time:         { type: String, required: true },
+    location:     { type: String, required: true },
+    image:        String,
+    status:       {
+      type: String,
+      enum: ["approved", "pending", "rejected"],
+      default: "pending"
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    approvedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User"
+      // you could add `required: true` here if you want to enforce it 
+      // whenever status === 'approved' via custom validation
+    }
   },
   { timestamps: true }
 );

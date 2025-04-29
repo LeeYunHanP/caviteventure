@@ -1,52 +1,65 @@
-// File: src/app/api/events/[eventId]/approve/route.ts
+// File: src/app/api/events/[id]/approve/route.ts
+
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import dbConnect from "@/lib/dbConnect";
 import Event from "@/models/Event";
-import mongoose from "mongoose";
 
 export async function PATCH(
-  _request: Request,
-  // Declare params as a Promise for Next.js 15
-  { params }: { params: Promise<{ eventId: string }> }
+  request: Request,
+  { params }: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
-    // Await the dynamic segment
-    const { eventId } = await params;
+    const { id } = params;
 
-    // Connect to the database
+    // 1) Connect to your MongoDB
     await dbConnect();
 
-    // Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    // 2) Validate the event ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { error: "Invalid event ID" },
         { status: 400 }
       );
     }
 
-    // Update event status
-    const updated = await Event.findByIdAndUpdate(
-      eventId,
-      { status: "approved" },
-      { new: true }
-    ).lean();
+    // 3) Pull the admin’s ID from the request body and validate
+    const { adminId } = await request.json();
+    if (!mongoose.Types.ObjectId.isValid(adminId)) {
+      return NextResponse.json(
+        { error: "Invalid admin ID" },
+        { status: 400 }
+      );
+    }
 
-    if (!updated) {
+    // 4) Approve the event and set approvedBy
+    const updatedEvent = await Event.findByIdAndUpdate(
+      id,
+      {
+        status: "approved",
+        approvedBy: new mongoose.Types.ObjectId(adminId),
+      },
+      { new: true }
+    )
+      .populate({ path: "createdBy", select: "name" })
+      .populate({ path: "approvedBy", select: "name" })
+      .lean();
+
+    // 5) Handle “not found”
+    if (!updatedEvent) {
       return NextResponse.json(
         { error: "Event not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(
-      { message: "Event approved successfully" },
-      { status: 200 }
-    );
+    // 6) Return the full, populated event object
+    return NextResponse.json(updatedEvent, { status: 200 });
   } catch (err: unknown) {
     console.error("Error approving event:", err);
-    const errorMessage = err instanceof Error ? err.message : String(err);
+    const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: message },
       { status: 500 }
     );
   }
